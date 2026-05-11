@@ -1,0 +1,574 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>خوارزمية تصنيف الأفعال - النسخة الاحترافية</title>
+<link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;700;900&family=Amiri:wght@400;700&display=swap" rel="stylesheet">
+
+<style>
+:root {
+  --primary: #4834d4;
+  --secondary: #686de0;
+  --accent: #f0932b;
+  --success: #6ab04c;
+  --danger: #eb4d4b;
+  --bg: #f6f9fc;
+  --white: #ffffff;
+  --text: #2d3436;
+  --node-bg: #ffffff;
+  --node-border: #dcdde1;
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  font-family: 'Tajawal', sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  overflow-x: hidden;
+  padding: 20px;
+}
+
+.container {
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+header {
+  text-align: center;
+  margin-bottom: 40px;
+  animation: fadeInDown 0.8s ease;
+}
+
+header h1 {
+  font-family: 'Amiri', serif;
+  font-size: 3rem;
+  color: var(--primary);
+  text-shadow: 2px 2px 4px rgba(0,0,0,0.05);
+}
+
+header p {
+  font-size: 1.2rem;
+  color: var(--secondary);
+  margin-top: 10px;
+}
+
+.game-layout {
+  display: grid;
+  grid-template-columns: 1fr 380px;
+  gap: 30px;
+}
+
+@media (max-width: 1000px) {
+  .game-layout { grid-template-columns: 1fr; }
+}
+
+/* Flowchart Pro Styles */
+.flowchart-wrapper {
+  background: var(--white);
+  border-radius: 30px;
+  box-shadow: 0 20px 40px rgba(0,0,0,0.05);
+  padding: 40px;
+  position: relative;
+  min-height: 700px;
+  overflow: hidden;
+}
+
+.svg-overlay {
+  position: absolute;
+  top: 0; left: 0;
+  width: 100%; height: 100%;
+  pointer-events: none;
+  z-index: 1;
+}
+
+.connector {
+  fill: none;
+  stroke: #dfe6e9;
+  stroke-width: 4;
+  stroke-linecap: round;
+  transition: stroke 0.5s, stroke-width 0.5s;
+}
+
+.connector.active {
+  stroke: var(--accent);
+  stroke-width: 6;
+  filter: drop-shadow(0 0 5px rgba(240, 147, 43, 0.5));
+}
+
+.nodes-container {
+  position: relative;
+  z-index: 2;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.node {
+  background: var(--node-bg);
+  border: 3px solid var(--node-border);
+  border-radius: 20px;
+  padding: 15px 25px;
+  font-weight: 700;
+  text-align: center;
+  transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  cursor: default;
+  position: absolute;
+  min-width: 140px;
+  box-shadow: 0 5px 15px rgba(0,0,0,0.02);
+}
+
+.node.active {
+  border-color: var(--accent);
+  transform: scale(1.1);
+  box-shadow: 0 10px 25px rgba(240, 147, 43, 0.2);
+  z-index: 10;
+}
+
+.node.done {
+  border-color: var(--primary);
+  background: #f0f3ff;
+}
+
+.node-title { display: block; font-size: 1rem; }
+.node-sub { display: block; font-size: 0.75rem; opacity: 0.7; margin-top: 4px; }
+
+/* Node Positions */
+#n-root { top: 20px; left: 50%; transform: translateX(-50%); }
+#n-q1 { top: 120px; left: 50%; transform: translateX(-50%); }
+#n-mutall { top: 240px; left: 25%; transform: translateX(-50%); }
+#n-sahih { top: 240px; left: 75%; transform: translateX(-50%); }
+#n-q-weak { top: 360px; left: 25%; transform: translateX(-50%); }
+#n-q-sahih { top: 360px; left: 75%; transform: translateX(-50%); }
+#n-mithal { top: 480px; left: 10%; transform: translateX(-50%); }
+#n-ajwaf { top: 480px; left: 25%; transform: translateX(-50%); }
+#n-naqis { top: 480px; left: 40%; transform: translateX(-50%); }
+#n-mahmouz { top: 480px; left: 65%; transform: translateX(-50%); }
+#n-q-shadda { top: 480px; left: 85%; transform: translateX(-50%); }
+#n-mudaaf { top: 580px; left: 78%; transform: translateX(-50%); }
+#n-salim { top: 580px; left: 92%; transform: translateX(-50%); }
+
+.genie-pro {
+  position: absolute;
+  width: 80px;
+  height: 80px;
+  z-index: 100;
+  pointer-events: none;
+  transition: all 0.8s cubic-bezier(0.45, 0.05, 0.55, 0.95);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  filter: drop-shadow(0 10px 20px rgba(0,0,0,0.2));
+}
+
+.genie-pro img {
+  width: 100%;
+  height: auto;
+  animation: float 3s ease-in-out infinite;
+}
+
+@keyframes float {
+  0%, 100% { transform: translateY(0) rotate(0deg); }
+  50% { transform: translateY(-15px) rotate(5deg); }
+}
+
+/* Control Panel */
+.side-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.card {
+  background: var(--white);
+  border-radius: 25px;
+  padding: 30px;
+  box-shadow: 0 15px 35px rgba(0,0,0,0.05);
+}
+
+.word-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 12px;
+  margin: 20px 0;
+}
+
+.word-item {
+  background: #f1f2f6;
+  padding: 12px;
+  border-radius: 15px;
+  text-align: center;
+  font-weight: 700;
+  font-family: 'Amiri', serif;
+  font-size: 1.2rem;
+  transition: 0.3s;
+}
+
+.word-item.eliminated {
+  opacity: 0.2;
+  transform: scale(0.9);
+  filter: grayscale(1);
+}
+
+.question-box {
+  text-align: center;
+}
+
+.question-box h2 {
+  font-size: 1.4rem;
+  margin-bottom: 25px;
+  line-height: 1.5;
+}
+
+.btn-group {
+  display: flex;
+  gap: 15px;
+}
+
+.btn {
+  flex: 1;
+  padding: 15px;
+  border: none;
+  border-radius: 18px;
+  font-family: 'Tajawal', sans-serif;
+  font-weight: 700;
+  font-size: 1.1rem;
+  cursor: pointer;
+  transition: 0.3s;
+}
+
+.btn-yes { background: var(--success); color: white; }
+.btn-no { background: var(--danger); color: white; }
+.btn-primary { background: var(--primary); color: white; width: 100%; }
+
+.btn:hover { transform: translateY(-3px); box-shadow: 0 5px 15px rgba(0,0,0,0.1); }
+.btn:active { transform: scale(0.95); }
+
+.hidden { display: none; }
+
+.result-view {
+  text-align: center;
+  animation: zoomIn 0.5s ease;
+}
+
+@keyframes zoomIn {
+  from { opacity: 0; transform: scale(0.8); }
+  to { opacity: 1; transform: scale(1); }
+}
+
+.result-word {
+  font-family: 'Amiri', serif;
+  font-size: 3.5rem;
+  color: var(--accent);
+  margin: 10px 0;
+}
+
+.result-type {
+  font-size: 1.2rem;
+  color: var(--primary);
+  font-weight: 700;
+}
+
+@keyframes fadeInDown {
+  from { opacity: 0; transform: translateY(-20px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+</style>
+</head>
+<body>
+
+<div class="container">
+  <header>
+    <h1>خوارزمية تصنيف الأفعال</h1>
+    <p>الجني العارف يكتشف ما يدور في ذهنك!</p>
+  </header>
+
+  <div class="game-layout">
+    <!-- Flowchart Area -->
+    <div class="flowchart-wrapper" id="flowchart">
+      <svg class="svg-overlay" id="svgConnectors">
+        <!-- Connectors will be drawn here -->
+      </svg>
+
+      <div class="genie-pro" id="genie">
+        <span style="font-size: 4rem;">🧞</span>
+      </div>
+
+      <div class="nodes-container">
+        <div class="node done" id="n-root">
+          <span class="node-title">📖 الفعل الماضي</span>
+        </div>
+        <div class="node" id="n-q1">
+          <span class="node-title">هل به حرف علة؟</span>
+          <span class="node-sub">ا ، و ، ي</span>
+        </div>
+        <div class="node" id="n-mutall">
+          <span class="node-title">الفعل المعتل</span>
+        </div>
+        <div class="node" id="n-sahih">
+          <span class="node-title">الفعل الصحيح</span>
+        </div>
+        <div class="node" id="n-q-weak">
+          <span class="node-title">أين حرف العلة؟</span>
+        </div>
+        <div class="node" id="n-q-sahih">
+          <span class="node-title">هل به همزة؟</span>
+        </div>
+        <div class="node" id="n-mithal">
+          <span class="node-title">🚩 مثال</span>
+          <span class="node-sub">وعد</span>
+        </div>
+        <div class="node" id="n-ajwaf">
+          <span class="node-title">🧩 أجوف</span>
+          <span class="node-sub">قال</span>
+        </div>
+        <div class="node" id="n-naqis">
+          <span class="node-title">🎯 ناقص</span>
+          <span class="node-sub">رمى</span>
+        </div>
+        <div class="node" id="n-mahmouz">
+          <span class="node-title">✒️ مهموز</span>
+          <span class="node-sub">أكل</span>
+        </div>
+        <div class="node" id="n-q-shadda">
+          <span class="node-title">تضعيف؟</span>
+        </div>
+        <div class="node" id="n-mudaaf">
+          <span class="node-title">💪 مضعف</span>
+          <span class="node-sub">مدّ</span>
+        </div>
+        <div class="node" id="n-salim">
+          <span class="node-title">📗 سالم</span>
+          <span class="node-sub">كتب</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Controls Area -->
+    <div class="side-panel">
+      <div class="card" id="welcome-card">
+        <h3>صندوق الكلمات</h3>
+        <div class="word-grid" id="wordGrid">
+          <!-- Words injected here -->
+        </div>
+        <p style="margin-bottom: 20px; font-size: 0.9rem; color: #636e72;">اختر فعلاً واحداً في ذهنك، وسأقوم بتصنيفه باستخدام الخوارزمية!</p>
+        <button class="btn btn-primary" onclick="startGame()">ابدأ التحدي</button>
+      </div>
+
+      <div class="card hidden" id="game-card">
+        <div class="question-box">
+          <h2 id="questionText">...</h2>
+          <div class="btn-group">
+            <button class="btn btn-yes" onclick="handleAnswer(true)">نعم</button>
+            <button class="btn btn-no" onclick="handleAnswer(false)">لا</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="card hidden" id="result-card">
+        <div class="result-view">
+          <span style="font-size: 3rem;">✨</span>
+          <h3>لقد وجدتها!</h3>
+          <div class="result-word" id="resWord">...</div>
+          <div class="result-type" id="resType">...</div>
+          <button class="btn btn-primary" style="margin-top: 30px;" onclick="resetGame()">العب مرة أخرى</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+const VERBS = [
+  { word: 'كتب', type: 'صحيح سالم', hasIlla: false, hamza: false, shadda: false },
+  { word: 'أكل', type: 'صحيح مهموز', hasIlla: false, hamza: true },
+  { word: 'مدّ', type: 'صحيح مضعف', hasIlla: false, hamza: false, shadda: true },
+  { word: 'وعد', type: 'معتل مثال', hasIlla: true, pos: 'بداية' },
+  { word: 'قال', type: 'معتل أجوف', hasIlla: true, pos: 'وسط' },
+  { word: 'رمى', type: 'معتل ناقص', hasIlla: true, pos: 'آخر' }
+];
+
+const CONNECTIONS = [
+  ['n-root', 'n-q1'],
+  ['n-q1', 'n-mutall'],
+  ['n-q1', 'n-sahih'],
+  ['n-mutall', 'n-q-weak'],
+  ['n-sahih', 'n-q-sahih'],
+  ['n-q-weak', 'n-mithal'],
+  ['n-q-weak', 'n-ajwaf'],
+  ['n-q-weak', 'n-naqis'],
+  ['n-q-sahih', 'n-mahmouz'],
+  ['n-q-sahih', 'n-q-shadda'],
+  ['n-q-shadda', 'n-mudaaf'],
+  ['n-q-shadda', 'n-salim']
+];
+
+let currentStep = 'q1';
+
+function init() {
+  const grid = document.getElementById('wordGrid');
+  grid.innerHTML = VERBS.map(v => `<div class="word-item" id="chip-${v.word}">${v.word}</div>`).join('');
+  drawConnectors();
+  moveGenie('n-root');
+}
+
+function drawConnectors() {
+  const svg = document.getElementById('svgConnectors');
+  svg.innerHTML = '';
+  CONNECTIONS.forEach(([fromId, toId]) => {
+    const from = document.getElementById(fromId);
+    const to = document.getElementById(toId);
+    const fRect = from.getBoundingClientRect();
+    const tRect = to.getBoundingClientRect();
+    const pRect = document.getElementById('flowchart').getBoundingClientRect();
+
+    const x1 = fRect.left + fRect.width/2 - pRect.left;
+    const y1 = fRect.top + fRect.height/2 - pRect.top;
+    const x2 = tRect.left + tRect.width/2 - pRect.left;
+    const y2 = tRect.top + tRect.height/2 - pRect.top;
+
+    const path = document.createElementNS("http://www.w3.org/2000/svg", "path");
+    const d = `M ${x1} ${y1} L ${x2} ${y2}`;
+    path.setAttribute("d", d);
+    path.setAttribute("class", "connector");
+    path.setAttribute("id", `c-${fromId}-${toId}`);
+    svg.appendChild(path);
+  });
+}
+
+function moveGenie(nodeId) {
+  const genie = document.getElementById('genie');
+  const node = document.getElementById(nodeId);
+  const nRect = node.getBoundingClientRect();
+  const pRect = document.getElementById('flowchart').getBoundingClientRect();
+
+  const x = nRect.left + nRect.width/2 - pRect.left - 40;
+  const y = nRect.top - pRect.top - 60;
+
+  genie.style.left = `${x}px`;
+  genie.style.top = `${y}px`;
+
+  document.querySelectorAll('.node').forEach(n => n.classList.remove('active'));
+  node.classList.add('active');
+}
+
+function activatePath(fromId, toId) {
+  const conn = document.getElementById(`c-${fromId}-${toId}`);
+  if (conn) conn.classList.add('active');
+  document.getElementById(toId).classList.add('done');
+}
+
+function startGame() {
+  document.getElementById('welcome-card').classList.add('hidden');
+  document.getElementById('game-card').classList.remove('hidden');
+  currentStep = 'q1';
+  activatePath('n-root', 'n-q1');
+  updateUI();
+}
+
+function updateUI() {
+  const qText = document.getElementById('questionText');
+  if (currentStep === 'q1') {
+    qText.innerText = 'هل يحتوي الفعل على حرف علة؟';
+    moveGenie('n-q1');
+  } else if (currentStep === 'q-weak') {
+    qText.innerText = 'هل حرف العلة في بداية الفعل؟';
+    moveGenie('n-q-weak');
+  } else if (currentStep === 'q-middle') {
+    qText.innerText = 'هل حرف العلة في وسط الفعل؟';
+    moveGenie('n-q-weak');
+  } else if (currentStep === 'q-sahih') {
+    qText.innerText = 'هل يحتوي الفعل على همزة؟';
+    moveGenie('n-q-sahih');
+  } else if (currentStep === 'q-shadda') {
+    qText.innerText = 'هل يحتوي الفعل على تضعيف (شدّة)؟';
+    moveGenie('n-q-shadda');
+  }
+}
+
+function handleAnswer(isYes) {
+  if (currentStep === 'q1') {
+    if (isYes) {
+      currentStep = 'q-weak';
+      activatePath('n-q1', 'n-mutall');
+      setTimeout(() => activatePath('n-mutall', 'n-q-weak'), 400);
+      eliminate(v => !v.hasIlla);
+    } else {
+      currentStep = 'q-sahih';
+      activatePath('n-q1', 'n-sahih');
+      setTimeout(() => activatePath('n-sahih', 'n-q-sahih'), 400);
+      eliminate(v => v.hasIlla);
+    }
+  } else if (currentStep === 'q-weak') {
+    if (isYes) {
+      activatePath('n-q-weak', 'n-mithal');
+      showResult('وعد');
+    } else {
+      currentStep = 'q-middle';
+    }
+  } else if (currentStep === 'q-middle') {
+    if (isYes) {
+      activatePath('n-q-weak', 'n-ajwaf');
+      showResult('قال');
+    } else {
+      activatePath('n-q-weak', 'n-naqis');
+      showResult('رمى');
+    }
+  } else if (currentStep === 'q-sahih') {
+    if (isYes) {
+      activatePath('n-q-sahih', 'n-mahmouz');
+      showResult('أكل');
+    } else {
+      currentStep = 'q-shadda';
+      activatePath('n-q-sahih', 'n-q-shadda');
+    }
+  } else if (currentStep === 'q-shadda') {
+    if (isYes) {
+      activatePath('n-q-shadda', 'n-mudaaf');
+      showResult('مدّ');
+    } else {
+      activatePath('n-q-shadda', 'n-salim');
+      showResult('كتب');
+    }
+  }
+  updateUI();
+}
+
+function eliminate(fn) {
+  VERBS.forEach(v => {
+    if (fn(v)) document.getElementById('chip-' + v.word).classList.add('eliminated');
+  });
+}
+
+function showResult(wordName) {
+  const verb = VERBS.find(v => v.word === wordName);
+  const nodeMap = { 'وعد': 'n-mithal', 'قال': 'n-ajwaf', 'رمى': 'n-naqis', 'أكل': 'n-mahmouz', 'مدّ': 'n-mudaaf', 'كتب': 'n-salim' };
+  
+  setTimeout(() => {
+    moveGenie(nodeMap[wordName]);
+    document.getElementById('game-card').classList.add('hidden');
+    document.getElementById('result-card').classList.remove('hidden');
+    document.getElementById('resWord').innerText = verb.word;
+    document.getElementById('resType').innerText = 'التصنيف: ' + verb.type;
+  }, 600);
+}
+
+function resetGame() {
+  document.getElementById('result-card').classList.add('hidden');
+  document.getElementById('welcome-card').classList.remove('hidden');
+  document.querySelectorAll('.word-item').forEach(c => c.classList.remove('eliminated'));
+  document.querySelectorAll('.connector').forEach(c => c.classList.remove('active'));
+  document.querySelectorAll('.node').forEach(n => {
+    n.classList.remove('done');
+    n.classList.remove('active');
+  });
+  document.getElementById('n-root').classList.add('done');
+  moveGenie('n-root');
+}
+
+window.onload = init;
+window.onresize = drawConnectors;
+</script>
+</body>
+</html>
