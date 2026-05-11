@@ -1,0 +1,403 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>خوارزمية تصنيف الأفعال - الجني العارف</title>
+<link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@300;400;500;700;800;900&family=Amiri:wght@400;700&display=swap" rel="stylesheet">
+
+<style>
+:root {
+  --bg: #f0f4ff;
+  --surface: #ffffff;
+  --navy: #1a237e;
+  --blue: #1565c0;
+  --blue-l: #e3f0ff;
+  --gold: #f5a623;
+  --red: #e53935;
+  --red-l: #ffeaea;
+  --green: #2e7d32;
+  --green-l: #e8f5e9;
+  --orange: #e65100;
+  --orange-l: #fff3e0;
+  --purple: #6a1b9a;
+  --purple-l: #f3e5f5;
+  --teal: #00695c;
+  --teal-l: #e0f2f1;
+  --shadow-md: 0 6px 24px rgba(26,35,126,0.12);
+  --radius-lg: 24px;
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  font-family: 'Tajawal', sans-serif;
+  background: var(--bg);
+  min-height: 100vh;
+  color: #1a1a2e;
+  overflow-x: hidden;
+  padding: 20px;
+}
+
+.wrapper {
+  max-width: 1100px;
+  margin: 0 auto;
+}
+
+.site-header {
+  text-align: center;
+  margin-bottom: 30px;
+}
+
+.site-header h1 {
+  font-family: 'Amiri', serif;
+  font-size: 2.5rem;
+  color: var(--navy);
+}
+
+.site-header h1 span { color: var(--gold); }
+
+.game-grid {
+  display: grid;
+  grid-template-columns: 1fr 350px;
+  gap: 20px;
+}
+
+@media (max-width: 900px) {
+  .game-grid { grid-template-columns: 1fr; }
+}
+
+.panel {
+  background: var(--surface);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-md);
+  overflow: hidden;
+  padding: 20px;
+}
+
+/* Flowchart Styles */
+.flowchart-canvas {
+  position: relative;
+  min-height: 600px;
+  background: #fcfcfc;
+  border-radius: 15px;
+  padding: 20px;
+}
+
+.fc-nodes {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 15px;
+}
+
+.fc-row {
+  display: flex;
+  gap: 15px;
+  justify-content: center;
+  width: 100%;
+}
+
+.fc-node {
+  padding: 10px 15px;
+  border-radius: 12px;
+  border: 2px solid #ddd;
+  background: #fff;
+  font-weight: bold;
+  font-size: 0.9rem;
+  text-align: center;
+  transition: all 0.4s ease;
+  opacity: 0.5;
+  min-width: 100px;
+}
+
+.fc-node.active {
+  opacity: 1;
+  border-color: var(--gold);
+  box-shadow: 0 0 15px rgba(245,166,35,0.4);
+  transform: scale(1.05);
+}
+
+.fc-node.done {
+  opacity: 0.8;
+  background: var(--blue-l);
+  border-color: var(--blue);
+}
+
+.fn-root { background: var(--blue-l); color: var(--navy); }
+.fn-q { background: #fff8e7; color: #795548; }
+.fn-mutall { background: var(--red-l); color: var(--red); }
+.fn-sahih { background: var(--green-l); color: var(--green); }
+
+.genie-marker {
+  position: absolute;
+  font-size: 2.5rem;
+  transition: all 0.7s cubic-bezier(0.34, 1.3, 0.64, 1);
+  z-index: 10;
+  pointer-events: none;
+}
+
+/* Game Controls */
+.controls-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.word-box-inner {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  justify-content: center;
+  margin-top: 10px;
+}
+
+.word-chip {
+  padding: 8px 15px;
+  background: #fff;
+  border: 1px solid #ddd;
+  border-radius: 20px;
+  font-weight: bold;
+  font-family: 'Amiri', serif;
+}
+
+.word-chip.eliminated {
+  opacity: 0.3;
+  text-decoration: line-through;
+}
+
+.question-area {
+  text-align: center;
+  padding: 20px;
+  background: var(--blue-l);
+  border-radius: 15px;
+}
+
+.btn {
+  padding: 12px 25px;
+  border: none;
+  border-radius: 10px;
+  font-weight: bold;
+  cursor: pointer;
+  font-family: 'Tajawal', sans-serif;
+  transition: 0.3s;
+}
+
+.btn-yes { background: var(--green); color: #fff; }
+.btn-no { background: var(--red); color: #fff; }
+.btn-primary { background: var(--navy); color: #fff; width: 100%; }
+
+.hidden { display: none; }
+
+.result-card {
+  text-align: center;
+  padding: 30px;
+}
+
+.result-emoji { font-size: 4rem; margin-bottom: 15px; }
+.result-word { font-size: 2rem; color: var(--navy); font-family: 'Amiri', serif; }
+
+</style>
+</head>
+<body>
+
+<div class="wrapper">
+  <header class="site-header">
+    <h1>خوارزمية تصنيف الأفعال<br><span>(الصحيح والمعتل)</span></h1>
+  </header>
+
+  <div class="game-grid">
+    <!-- Flowchart -->
+    <div class="panel">
+      <div class="flowchart-canvas" id="fcCanvas">
+        <div class="genie-marker" id="genieMarker" style="top: 10px; left: 50%; transform: translateX(-50%);">🧞</div>
+        
+        <div class="fc-nodes">
+          <div class="fc-row">
+            <div class="fc-node fn-root active" id="n-root">📖 الفعل الماضي</div>
+          </div>
+          <div class="fc-row">
+            <div class="fc-node fn-q" id="n-q1">هل به حرف علة؟</div>
+          </div>
+          <div class="fc-row">
+            <div class="fc-node fn-mutall" id="n-mutall">الفعل المعتل</div>
+            <div class="fc-node fn-sahih" id="n-sahih">الفعل الصحيح</div>
+          </div>
+          <div class="fc-row">
+            <div class="fc-node fn-q" id="n-q-weak">أين حرف العلة؟</div>
+            <div class="fc-node fn-q" id="n-q-sahih">هل به همزة؟</div>
+          </div>
+          <div class="fc-row">
+            <div class="fc-node" id="n-mithal">مثال (وعد)</div>
+            <div class="fc-node" id="n-ajwaf">أجوف (قال)</div>
+            <div class="fc-node" id="n-naqis">ناقص (رمى)</div>
+            <div class="fc-node" id="n-mahmouz">مهموز (أكل)</div>
+            <div class="fc-node" id="n-q-shadda">تضعيف؟</div>
+          </div>
+          <div class="fc-row">
+            <div class="fc-node" id="n-mudaaf">مضعف (مدّ)</div>
+            <div class="fc-node" id="n-salim">سالم (كتب)</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Controls -->
+    <div class="controls-panel">
+      <div class="panel" id="welcome-screen">
+        <h3>صندوق الكلمات</h3>
+        <div class="word-box-inner" id="wordsGrid">
+          <!-- Words will be injected here -->
+        </div>
+        <p style="margin: 15px 0; font-size: 0.9rem;">اختر فعلاً في سرك وسأعرفه!</p>
+        <button class="btn btn-primary" onclick="startGame()">ابدأ اللعب</button>
+      </div>
+
+      <div class="panel hidden" id="question-screen">
+        <div class="question-area">
+          <h2 id="questionText">السؤال هنا...</h2>
+          <div style="margin-top: 20px; display: flex; gap: 10px; justify-content: center;">
+            <button class="btn btn-yes" onclick="handleAnswer(true)">نعم</button>
+            <button class="btn btn-no" onclick="handleAnswer(false)">لا</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="panel hidden" id="result-screen">
+        <div class="result-card">
+          <div class="result-emoji">✨</div>
+          <h3>لقد عرفتها!</h3>
+          <p>أنت تفكر بالفعل:</p>
+          <div class="result-word" id="resultWord">...</div>
+          <p id="resultType" style="color: var(--blue); font-weight: bold; margin-top: 10px;"></p>
+          <button class="btn btn-primary" style="margin-top: 20px;" onclick="resetGame()">العب مرة أخرى</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+const VERBS = [
+  { word: 'كتب', type: 'صحيح سالم', hasIlla: false, hamza: false, shadda: false },
+  { word: 'أكل', type: 'صحيح مهموز', hasIlla: false, hamza: true },
+  { word: 'مدّ', type: 'صحيح مضعف', hasIlla: false, hamza: false, shadda: true },
+  { word: 'وعد', type: 'معتل مثال', hasIlla: true, pos: 'بداية' },
+  { word: 'قال', type: 'معتل أجوف', hasIlla: true, pos: 'وسط' },
+  { word: 'رمى', type: 'معتل ناقص', hasIlla: true, pos: 'آخر' }
+];
+
+const GENIE_POS = {
+  'root': { top: '10px', left: '50%' },
+  'q1': { top: '70px', left: '50%' },
+  'mutall': { top: '130px', left: '30%' },
+  'sahih': { top: '130px', left: '70%' },
+  'q-weak': { top: '190px', left: '20%' },
+  'q-sahih': { top: '190px', left: '80%' },
+  'mithal': { top: '250px', left: '10%' },
+  'ajwaf': { top: '250px', left: '25%' },
+  'naqis': { top: '250px', left: '40%' },
+  'mahmouz': { top: '250px', left: '70%' },
+  'q-shadda': { top: '250px', left: '90%' },
+  'mudaaf': { top: '310px', left: '80%' },
+  'salim': { top: '310px', left: '95%' }
+};
+
+let currentStep = 'q1';
+
+function initWords() {
+  const grid = document.getElementById('wordsGrid');
+  grid.innerHTML = VERBS.map(v => `<div class="word-chip" id="chip-${v.word}">${v.word}</div>`).join('');
+}
+
+function moveGenie(nodeId) {
+  const marker = document.getElementById('genieMarker');
+  const pos = GENIE_POS[nodeId];
+  marker.style.top = pos.top;
+  marker.style.left = pos.left;
+  
+  document.querySelectorAll('.fc-node').forEach(n => n.classList.remove('active'));
+  const node = document.getElementById('n-' + nodeId);
+  if (node) node.classList.add('active');
+}
+
+function startGame() {
+  document.getElementById('welcome-screen').classList.add('hidden');
+  document.getElementById('question-screen').classList.remove('hidden');
+  currentStep = 'q1';
+  updateUI();
+}
+
+function updateUI() {
+  const qText = document.getElementById('questionText');
+  if (currentStep === 'q1') {
+    qText.innerText = 'هل يحتوي الفعل على حرف علة؟';
+    moveGenie('q1');
+  } else if (currentStep === 'q-weak') {
+    qText.innerText = 'هل حرف العلة في بداية الفعل؟';
+    moveGenie('q-weak');
+  } else if (currentStep === 'q-middle') {
+    qText.innerText = 'هل حرف العلة في وسط الفعل؟';
+    moveGenie('q-weak');
+  } else if (currentStep === 'q-sahih') {
+    qText.innerText = 'هل يحتوي الفعل على همزة؟';
+    moveGenie('q-sahih');
+  } else if (currentStep === 'q-shadda') {
+    qText.innerText = 'هل يحتوي الفعل على تضعيف (شدّة)؟';
+    moveGenie('q-shadda');
+  }
+}
+
+function handleAnswer(isYes) {
+  if (currentStep === 'q1') {
+    if (isYes) {
+      currentStep = 'q-weak';
+      eliminate(v => !v.hasIlla);
+    } else {
+      currentStep = 'q-sahih';
+      eliminate(v => v.hasIlla);
+    }
+  } else if (currentStep === 'q-weak') {
+    if (isYes) showResult('وعد');
+    else currentStep = 'q-middle';
+  } else if (currentStep === 'q-middle') {
+    if (isYes) showResult('قال');
+    else showResult('رمى');
+  } else if (currentStep === 'q-sahih') {
+    if (isYes) showResult('أكل');
+    else currentStep = 'q-shadda';
+  } else if (currentStep === 'q-shadda') {
+    if (isYes) showResult('مدّ');
+    else showResult('كتب');
+  }
+  updateUI();
+}
+
+function eliminate(fn) {
+  VERBS.forEach(v => {
+    if (fn(v)) document.getElementById('chip-' + v.word).classList.add('eliminated');
+  });
+}
+
+function showResult(wordName) {
+  const verb = VERBS.find(v => v.word === wordName);
+  document.getElementById('question-screen').classList.add('hidden');
+  document.getElementById('result-screen').classList.remove('hidden');
+  document.getElementById('resultWord').innerText = verb.word;
+  document.getElementById('resultType').innerText = 'التصنيف: ' + verb.type;
+  
+  const nodeMap = { 'وعد': 'mithal', 'قال': 'ajwaf', 'رمى': 'naqis', 'أكل': 'mahmouz', 'مدّ': 'mudaaf', 'كتب': 'salim' };
+  moveGenie(nodeMap[wordName]);
+}
+
+function resetGame() {
+  document.getElementById('result-screen').classList.add('hidden');
+  document.getElementById('welcome-screen').classList.remove('hidden');
+  document.querySelectorAll('.word-chip').forEach(c => c.classList.remove('eliminated'));
+  moveGenie('root');
+}
+
+window.onload = initWords;
+</script>
+</body>
+</html>
