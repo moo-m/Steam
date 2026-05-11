@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>خوارزمية تصنيف الأفعال - النسخة الاحترافية</title>
+<title>خوارزمية تصنيف الأفعال - النسخة السحرية</title>
 <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;700;900&family=Amiri:wght@400;700&display=swap" rel="stylesheet">
 
 <style>
@@ -38,7 +38,6 @@ body {
 header {
   text-align: center;
   margin-bottom: 40px;
-  animation: fadeInDown 0.8s ease;
 }
 
 header h1 {
@@ -64,14 +63,13 @@ header p {
   .game-layout { grid-template-columns: 1fr; }
 }
 
-/* Flowchart Pro Styles */
 .flowchart-wrapper {
   background: var(--white);
   border-radius: 30px;
   box-shadow: 0 20px 40px rgba(0,0,0,0.05);
   padding: 40px;
   position: relative;
-  min-height: 700px;
+  min-height: 850px;
   overflow: hidden;
 }
 
@@ -136,44 +134,44 @@ header p {
 
 /* Node Positions */
 #n-root { top: 20px; left: 50%; transform: translateX(-50%); }
-#n-q1 { top: 120px; left: 50%; transform: translateX(-50%); }
-#n-mutall { top: 240px; left: 25%; transform: translateX(-50%); }
-#n-sahih { top: 240px; left: 75%; transform: translateX(-50%); }
-#n-q-weak { top: 360px; left: 25%; transform: translateX(-50%); }
-#n-q-sahih { top: 360px; left: 75%; transform: translateX(-50%); }
-#n-mithal { top: 480px; left: 10%; transform: translateX(-50%); }
-#n-ajwaf { top: 480px; left: 25%; transform: translateX(-50%); }
-#n-naqis { top: 480px; left: 40%; transform: translateX(-50%); }
-#n-mahmouz { top: 480px; left: 65%; transform: translateX(-50%); }
-#n-q-shadda { top: 480px; left: 85%; transform: translateX(-50%); }
-#n-mudaaf { top: 580px; left: 78%; transform: translateX(-50%); }
-#n-salim { top: 580px; left: 92%; transform: translateX(-50%); }
+#n-q1 { top: 140px; left: 50%; transform: translateX(-50%); }
+#n-mutall { top: 280px; left: 25%; transform: translateX(-50%); }
+#n-sahih { top: 280px; left: 75%; transform: translateX(-50%); }
+#n-q-weak { top: 420px; left: 25%; transform: translateX(-50%); }
+#n-q-sahih { top: 420px; left: 75%; transform: translateX(-50%); }
+#n-mithal { top: 560px; left: 10%; transform: translateX(-50%); }
+#n-ajwaf { top: 560px; left: 25%; transform: translateX(-50%); }
+#n-naqis { top: 560px; left: 40%; transform: translateX(-50%); }
+#n-mahmouz { top: 560px; left: 65%; transform: translateX(-50%); }
+#n-q-shadda { top: 560px; left: 85%; transform: translateX(-50%); }
+#n-mudaaf { top: 700px; left: 78%; transform: translateX(-50%); }
+#n-salim { top: 700px; left: 92%; transform: translateX(-50%); }
 
 .genie-pro {
   position: absolute;
-  width: 80px;
-  height: 80px;
+  width: 180px;
+  height: 270px;
   z-index: 100;
   pointer-events: none;
   transition: all 0.8s cubic-bezier(0.45, 0.05, 0.55, 0.95);
   display: flex;
   justify-content: center;
   align-items: center;
-  filter: drop-shadow(0 10px 20px rgba(0,0,0,0.2));
 }
 
 .genie-pro img {
   width: 100%;
-  height: auto;
+  height: 100%;
+  object-fit: contain;
   animation: float 3s ease-in-out infinite;
+  filter: drop-shadow(0 10px 20px rgba(0,0,0,0.2));
 }
 
 @keyframes float {
   0%, 100% { transform: translateY(0) rotate(0deg); }
-  50% { transform: translateY(-15px) rotate(5deg); }
+  50% { transform: translateY(-20px) rotate(2deg); }
 }
 
-/* Control Panel */
 .side-panel {
   display: flex;
   flex-direction: column;
@@ -269,11 +267,6 @@ header p {
   color: var(--primary);
   font-weight: 700;
 }
-
-@keyframes fadeInDown {
-  from { opacity: 0; transform: translateY(-20px); }
-  to { opacity: 1; transform: translateY(0); }
-}
 </style>
 </head>
 <body>
@@ -285,77 +278,35 @@ header p {
   </header>
 
   <div class="game-layout">
-    <!-- Flowchart Area -->
     <div class="flowchart-wrapper" id="flowchart">
-      <svg class="svg-overlay" id="svgConnectors">
-        <!-- Connectors will be drawn here -->
-      </svg>
-
+      <svg class="svg-overlay" id="svgConnectors"></svg>
       <div class="genie-pro" id="genie">
-        <span style="font-size: 4rem;">🧞</span>
+        <img id="genieImg" src="genie.png" alt="Genie">
       </div>
-
       <div class="nodes-container">
-        <div class="node done" id="n-root">
-          <span class="node-title">📖 الفعل الماضي</span>
-        </div>
-        <div class="node" id="n-q1">
-          <span class="node-title">هل به حرف علة؟</span>
-          <span class="node-sub">ا ، و ، ي</span>
-        </div>
-        <div class="node" id="n-mutall">
-          <span class="node-title">الفعل المعتل</span>
-        </div>
-        <div class="node" id="n-sahih">
-          <span class="node-title">الفعل الصحيح</span>
-        </div>
-        <div class="node" id="n-q-weak">
-          <span class="node-title">أين حرف العلة؟</span>
-        </div>
-        <div class="node" id="n-q-sahih">
-          <span class="node-title">هل به همزة؟</span>
-        </div>
-        <div class="node" id="n-mithal">
-          <span class="node-title">🚩 مثال</span>
-          <span class="node-sub">وعد</span>
-        </div>
-        <div class="node" id="n-ajwaf">
-          <span class="node-title">🧩 أجوف</span>
-          <span class="node-sub">قال</span>
-        </div>
-        <div class="node" id="n-naqis">
-          <span class="node-title">🎯 ناقص</span>
-          <span class="node-sub">رمى</span>
-        </div>
-        <div class="node" id="n-mahmouz">
-          <span class="node-title">✒️ مهموز</span>
-          <span class="node-sub">أكل</span>
-        </div>
-        <div class="node" id="n-q-shadda">
-          <span class="node-title">تضعيف؟</span>
-        </div>
-        <div class="node" id="n-mudaaf">
-          <span class="node-title">💪 مضعف</span>
-          <span class="node-sub">مدّ</span>
-        </div>
-        <div class="node" id="n-salim">
-          <span class="node-title">📗 سالم</span>
-          <span class="node-sub">كتب</span>
-        </div>
+        <div class="node done" id="n-root"><span class="node-title">📖 الفعل الماضي</span></div>
+        <div class="node" id="n-q1"><span class="node-title">هل به حرف علة؟</span><span class="node-sub">ا ، و ، ي</span></div>
+        <div class="node" id="n-mutall"><span class="node-title">الفعل المعتل</span></div>
+        <div class="node" id="n-sahih"><span class="node-title">الفعل الصحيح</span></div>
+        <div class="node" id="n-q-weak"><span class="node-title">أين حرف العلة؟</span></div>
+        <div class="node" id="n-q-sahih"><span class="node-title">هل به همزة؟</span></div>
+        <div class="node" id="n-mithal"><span class="node-title">🚩 مثال</span><span class="node-sub">وعد</span></div>
+        <div class="node" id="n-ajwaf"><span class="node-title">🧩 أجوف</span><span class="node-sub">قال</span></div>
+        <div class="node" id="n-naqis"><span class="node-title">🎯 ناقص</span><span class="node-sub">رمى</span></div>
+        <div class="node" id="n-mahmouz"><span class="node-title">✒️ مهموز</span><span class="node-sub">أكل</span></div>
+        <div class="node" id="n-q-shadda"><span class="node-title">تضعيف؟</span></div>
+        <div class="node" id="n-mudaaf"><span class="node-title">💪 مضعف</span><span class="node-sub">مدّ</span></div>
+        <div class="node" id="n-salim"><span class="node-title">📗 سالم</span><span class="node-sub">كتب</span></div>
       </div>
     </div>
 
-    <!-- Controls Area -->
     <div class="side-panel">
       <div class="card" id="welcome-card">
         <h3>صندوق الكلمات</h3>
-        <div class="word-grid" id="wordGrid">
-          <!-- Words injected here -->
-        </div>
+        <div class="word-grid" id="wordGrid"></div>
         <p style="margin-bottom: 20px; font-size: 0.9rem; color: #636e72;">اختر فعلاً واحداً في ذهنك، وسأقوم بتصنيفه باستخدام الخوارزمية!</p>
         <button class="btn btn-primary" onclick="startGame()">ابدأ التحدي</button>
       </div>
-
       <div class="card hidden" id="game-card">
         <div class="question-box">
           <h2 id="questionText">...</h2>
@@ -365,7 +316,6 @@ header p {
           </div>
         </div>
       </div>
-
       <div class="card hidden" id="result-card">
         <div class="result-view">
           <span style="font-size: 3rem;">✨</span>
@@ -390,18 +340,11 @@ const VERBS = [
 ];
 
 const CONNECTIONS = [
-  ['n-root', 'n-q1'],
-  ['n-q1', 'n-mutall'],
-  ['n-q1', 'n-sahih'],
-  ['n-mutall', 'n-q-weak'],
-  ['n-sahih', 'n-q-sahih'],
-  ['n-q-weak', 'n-mithal'],
-  ['n-q-weak', 'n-ajwaf'],
-  ['n-q-weak', 'n-naqis'],
-  ['n-q-sahih', 'n-mahmouz'],
-  ['n-q-sahih', 'n-q-shadda'],
-  ['n-q-shadda', 'n-mudaaf'],
-  ['n-q-shadda', 'n-salim']
+  ['n-root', 'n-q1'], ['n-q1', 'n-mutall'], ['n-q1', 'n-sahih'],
+  ['n-mutall', 'n-q-weak'], ['n-sahih', 'n-q-sahih'],
+  ['n-q-weak', 'n-mithal'], ['n-q-weak', 'n-ajwaf'], ['n-q-weak', 'n-naqis'],
+  ['n-q-sahih', 'n-mahmouz'], ['n-q-sahih', 'n-q-shadda'],
+  ['n-q-shadda', 'n-mudaaf'], ['n-q-shadda', 'n-salim']
 ];
 
 let currentStep = 'q1';
@@ -416,21 +359,18 @@ function init() {
 function drawConnectors() {
   const svg = document.getElementById('svgConnectors');
   svg.innerHTML = '';
+  const pRect = document.getElementById('flowchart').getBoundingClientRect();
   CONNECTIONS.forEach(([fromId, toId]) => {
     const from = document.getElementById(fromId);
     const to = document.getElementById(toId);
     const fRect = from.getBoundingClientRect();
     const tRect = to.getBoundingClientRect();
-    const pRect = document.getElementById('flowchart').getBoundingClientRect();
-
     const x1 = fRect.left + fRect.width/2 - pRect.left;
     const y1 = fRect.top + fRect.height/2 - pRect.top;
     const x2 = tRect.left + tRect.width/2 - pRect.left;
     const y2 = tRect.top + tRect.height/2 - pRect.top;
-
     const path = document.createElementNS("http://www.w3.org/2000/svg", "path");
-    const d = `M ${x1} ${y1} L ${x2} ${y2}`;
-    path.setAttribute("d", d);
+    path.setAttribute("d", `M ${x1} ${y1} L ${x2} ${y2}`);
     path.setAttribute("class", "connector");
     path.setAttribute("id", `c-${fromId}-${toId}`);
     svg.appendChild(path);
@@ -442,13 +382,8 @@ function moveGenie(nodeId) {
   const node = document.getElementById(nodeId);
   const nRect = node.getBoundingClientRect();
   const pRect = document.getElementById('flowchart').getBoundingClientRect();
-
-  const x = nRect.left + nRect.width/2 - pRect.left - 40;
-  const y = nRect.top - pRect.top - 60;
-
-  genie.style.left = `${x}px`;
-  genie.style.top = `${y}px`;
-
+  genie.style.left = `${nRect.left + nRect.width/2 - pRect.left - 90}px`;
+  genie.style.top = `${nRect.top - pRect.top - 240}px`;
   document.querySelectorAll('.node').forEach(n => n.classList.remove('active'));
   node.classList.add('active');
 }
@@ -469,22 +404,16 @@ function startGame() {
 
 function updateUI() {
   const qText = document.getElementById('questionText');
-  if (currentStep === 'q1') {
-    qText.innerText = 'هل يحتوي الفعل على حرف علة؟';
-    moveGenie('n-q1');
-  } else if (currentStep === 'q-weak') {
-    qText.innerText = 'هل حرف العلة في بداية الفعل؟';
-    moveGenie('n-q-weak');
-  } else if (currentStep === 'q-middle') {
-    qText.innerText = 'هل حرف العلة في وسط الفعل؟';
-    moveGenie('n-q-weak');
-  } else if (currentStep === 'q-sahih') {
-    qText.innerText = 'هل يحتوي الفعل على همزة؟';
-    moveGenie('n-q-sahih');
-  } else if (currentStep === 'q-shadda') {
-    qText.innerText = 'هل يحتوي الفعل على تضعيف (شدّة)؟';
-    moveGenie('n-q-shadda');
-  }
+  const steps = {
+    'q1': 'هل يحتوي الفعل على حرف علة؟',
+    'q-weak': 'هل حرف العلة في بداية الفعل؟',
+    'q-middle': 'هل حرف العلة في وسط الفعل؟',
+    'q-sahih': 'هل يحتوي الفعل على همزة؟',
+    'q-shadda': 'هل يحتوي الفعل على تضعيف (شدّة)؟'
+  };
+  qText.innerText = steps[currentStep];
+  const nodeMap = { 'q1': 'n-q1', 'q-weak': 'n-q-weak', 'q-middle': 'n-q-weak', 'q-sahih': 'n-q-sahih', 'q-shadda': 'n-q-shadda' };
+  moveGenie(nodeMap[currentStep]);
 }
 
 function handleAnswer(isYes) {
@@ -501,50 +430,28 @@ function handleAnswer(isYes) {
       eliminate(v => v.hasIlla);
     }
   } else if (currentStep === 'q-weak') {
-    if (isYes) {
-      activatePath('n-q-weak', 'n-mithal');
-      showResult('وعد');
-    } else {
-      currentStep = 'q-middle';
-    }
+    if (isYes) { activatePath('n-q-weak', 'n-mithal'); showResult('وعد'); }
+    else { currentStep = 'q-middle'; }
   } else if (currentStep === 'q-middle') {
-    if (isYes) {
-      activatePath('n-q-weak', 'n-ajwaf');
-      showResult('قال');
-    } else {
-      activatePath('n-q-weak', 'n-naqis');
-      showResult('رمى');
-    }
+    if (isYes) { activatePath('n-q-weak', 'n-ajwaf'); showResult('قال'); }
+    else { activatePath('n-q-weak', 'n-naqis'); showResult('رمى'); }
   } else if (currentStep === 'q-sahih') {
-    if (isYes) {
-      activatePath('n-q-sahih', 'n-mahmouz');
-      showResult('أكل');
-    } else {
-      currentStep = 'q-shadda';
-      activatePath('n-q-sahih', 'n-q-shadda');
-    }
+    if (isYes) { activatePath('n-q-sahih', 'n-mahmouz'); showResult('أكل'); }
+    else { currentStep = 'q-shadda'; activatePath('n-q-sahih', 'n-q-shadda'); }
   } else if (currentStep === 'q-shadda') {
-    if (isYes) {
-      activatePath('n-q-shadda', 'n-mudaaf');
-      showResult('مدّ');
-    } else {
-      activatePath('n-q-shadda', 'n-salim');
-      showResult('كتب');
-    }
+    if (isYes) { activatePath('n-q-shadda', 'n-mudaaf'); showResult('مدّ'); }
+    else { activatePath('n-q-shadda', 'n-salim'); showResult('كتب'); }
   }
   updateUI();
 }
 
 function eliminate(fn) {
-  VERBS.forEach(v => {
-    if (fn(v)) document.getElementById('chip-' + v.word).classList.add('eliminated');
-  });
+  VERBS.forEach(v => { if (fn(v)) document.getElementById('chip-' + v.word).classList.add('eliminated'); });
 }
 
 function showResult(wordName) {
   const verb = VERBS.find(v => v.word === wordName);
   const nodeMap = { 'وعد': 'n-mithal', 'قال': 'n-ajwaf', 'رمى': 'n-naqis', 'أكل': 'n-mahmouz', 'مدّ': 'n-mudaaf', 'كتب': 'n-salim' };
-  
   setTimeout(() => {
     moveGenie(nodeMap[wordName]);
     document.getElementById('game-card').classList.add('hidden');
@@ -559,10 +466,7 @@ function resetGame() {
   document.getElementById('welcome-card').classList.remove('hidden');
   document.querySelectorAll('.word-item').forEach(c => c.classList.remove('eliminated'));
   document.querySelectorAll('.connector').forEach(c => c.classList.remove('active'));
-  document.querySelectorAll('.node').forEach(n => {
-    n.classList.remove('done');
-    n.classList.remove('active');
-  });
+  document.querySelectorAll('.node').forEach(n => { n.classList.remove('done'); n.classList.remove('active'); });
   document.getElementById('n-root').classList.add('done');
   moveGenie('n-root');
 }
