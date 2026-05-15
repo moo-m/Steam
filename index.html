@@ -1,0 +1,923 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>مُصنِّف الأفعال – النسخة الملائكية</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Scheherazade+New:wght@400;500;600;700&family=Cairo:wght@300;400;600;700;900&display=swap" rel="stylesheet">
+<style>
+/* ═══════════════════════════════════════
+   DESIGN TOKENS – الطابع الذهبي الأنيق
+═══════════════════════════════════════ */
+:root {
+  --bg-deep: #0c0c14;
+  --bg-glass: rgba(22, 22, 36, 0.88);
+  --gold: #c8a96e;
+  --gold-light: #e8d5a3;
+  --gold-dim: #7a6540;
+  --teal: #4a9eb5;
+  --crimson-light: #e88888;
+  --text-primary: #ede8e0;
+  --text-secondary: #9a9280;
+  --text-muted: #5a5448;
+  --border: rgba(200, 169, 110, 0.15);
+}
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+html, body {
+  height: 100%;
+  overflow: hidden;
+}
+
+body {
+  background: var(--bg-deep);
+  color: var(--text-primary);
+  font-family: 'Cairo', 'Scheherazade New', serif;
+  direction: rtl;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 100vh;
+  position: relative;
+}
+
+#bg-canvas {
+  position: fixed;
+  top: 0; left: 0;
+  width: 100vw; height: 100vh;
+  pointer-events: none;
+  z-index: 0;
+}
+
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  background:
+    radial-gradient(ellipse 80% 60% at 50% 0%, rgba(200, 169, 110, 0.06) 0%, transparent 60%),
+    radial-gradient(ellipse 60% 40% at 80% 100%, rgba(74, 158, 181, 0.05) 0%, transparent 50%),
+    radial-gradient(ellipse 50% 50% at 20% 50%, rgba(122, 92, 181, 0.04) 0%, transparent 50%);
+  pointer-events: none;
+  z-index: 0;
+}
+
+/* ═══════════════════════════════════════
+   APP
+═══════════════════════════════════════ */
+#app {
+  position: relative;
+  z-index: 1;
+  width: min(580px, 95vw);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  animation: fadeIn 0.9s cubic-bezier(0.22, 1, 0.36, 1) both;
+  transition: opacity 0.4s ease;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(24px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+/* ═══════════════════════════════════════
+   HEADER
+═══════════════════════════════════════ */
+.header {
+  text-align: center;
+  margin-bottom: 28px;
+}
+
+.header-ornament {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  margin-bottom: 14px;
+  opacity: 0.55;
+}
+
+.ornament-line {
+  height: 1px;
+  width: 55px;
+  background: linear-gradient(90deg, transparent, var(--gold));
+}
+.ornament-line.right { background: linear-gradient(90deg, var(--gold), transparent); }
+
+.ornament-diamond {
+  width: 7px; height: 7px;
+  background: var(--gold);
+  transform: rotate(45deg);
+}
+
+.app-title {
+  font-family: 'Scheherazade New', serif;
+  font-size: clamp(28px, 6vw, 44px);
+  font-weight: 700;
+  color: var(--gold-light);
+  text-shadow: 0 0 50px rgba(200, 169, 110, 0.45);
+  line-height: 1.2;
+  margin-bottom: 6px;
+}
+
+.app-subtitle {
+  font-family: 'Cairo', sans-serif;
+  font-size: 12px;
+  font-weight: 300;
+  color: var(--text-muted);
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+/* ═══════════════════════════════════════
+   CARD
+═══════════════════════════════════════ */
+.card {
+  width: 100%;
+  background: var(--bg-glass);
+  border: 1px solid var(--border);
+  border-radius: 22px;
+  padding: 36px 32px 28px;
+  backdrop-filter: blur(24px);
+  -webkit-backdrop-filter: blur(24px);
+  box-shadow:
+    0 0 0 1px rgba(200, 169, 110, 0.05),
+    0 24px 80px rgba(0, 0, 0, 0.65),
+    inset 0 1px 0 rgba(200, 169, 110, 0.12);
+  position: relative;
+  overflow: hidden;
+}
+
+.card::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, var(--gold) 50%, transparent);
+  opacity: 0.45;
+}
+
+/* ═══════════════════════════════════════
+   INPUT
+═══════════════════════════════════════ */
+.input-label {
+  display: block;
+  font-size: 10px;
+  font-weight: 700;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.14em;
+  margin-bottom: 10px;
+}
+
+#verb-input {
+  width: 100%;
+  background: rgba(0, 0, 0, 0.4);
+  border: 1px solid var(--border);
+  border-radius: 13px;
+  padding: 18px 22px;
+  font-family: 'Scheherazade New', serif;
+  font-size: clamp(20px, 4.5vw, 30px);
+  font-weight: 500;
+  color: var(--text-primary);
+  text-align: center;
+  direction: rtl;
+  outline: none;
+  transition: border-color 0.3s, box-shadow 0.3s, background 0.3s;
+  caret-color: var(--gold);
+  margin-bottom: 16px;
+}
+
+#verb-input::placeholder {
+  color: var(--text-muted);
+  font-size: clamp(13px, 2.5vw, 16px);
+  font-family: 'Cairo', sans-serif;
+  font-weight: 300;
+}
+
+#verb-input:focus {
+  border-color: rgba(200, 169, 110, 0.45);
+  box-shadow: 0 0 0 3px rgba(200, 169, 110, 0.08), 0 0 30px rgba(200, 169, 110, 0.2);
+  background: rgba(0, 0, 0, 0.55);
+}
+
+/* ═══════════════════════════════════════
+   BUTTON
+═══════════════════════════════════════ */
+#check-btn {
+  width: 100%;
+  padding: 16px 24px;
+  background: linear-gradient(135deg, #6b5028 0%, #c8a96e 40%, #e0c888 60%, #c8a96e 80%, #6b5028 100%);
+  background-size: 250% 100%;
+  background-position: 100% 0;
+  border: none;
+  border-radius: 13px;
+  font-family: 'Cairo', sans-serif;
+  font-size: 16px;
+  font-weight: 800;
+  color: #0c0a06;
+  cursor: pointer;
+  letter-spacing: 0.12em;
+  transition: background-position 0.5s ease, box-shadow 0.3s, transform 0.2s, letter-spacing 0.3s;
+  position: relative;
+  overflow: hidden;
+  box-shadow: 0 4px 24px rgba(200, 169, 110, 0.28);
+  user-select: none;
+}
+
+#check-btn::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(180deg, rgba(255,255,255,0.12) 0%, transparent 60%);
+  pointer-events: none;
+}
+
+#check-btn:hover {
+  background-position: 0 0;
+  box-shadow: 0 8px 48px rgba(200, 169, 110, 0.55);
+  transform: translateY(-2px);
+  letter-spacing: 0.18em;
+}
+
+#check-btn:active {
+  transform: translateY(1px);
+  box-shadow: 0 2px 16px rgba(200, 169, 110, 0.3);
+}
+
+#check-btn:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+  transform: none;
+}
+
+/* ═══════════════════════════════════════
+   RESULT
+═══════════════════════════════════════ */
+.result-box {
+  width: 100%;
+  margin-top: 18px;
+  padding: 22px 24px;
+  border-radius: 14px;
+  border: 1px solid var(--border);
+  background: rgba(0, 0, 0, 0.28);
+  opacity: 0;
+  transform: translateY(14px) scale(0.98);
+  transition: opacity 0.45s ease, transform 0.45s cubic-bezier(0.22,1,0.36,1);
+  text-align: center;
+}
+
+.result-box.hidden { display: none; }
+
+.result-box.animate-in {
+  opacity: 1;
+  transform: translateY(0) scale(1);
+}
+
+.result-box.success {
+  border-color: rgba(74, 180, 110, 0.35);
+  background: rgba(20, 45, 30, 0.55);
+  box-shadow: 0 0 35px rgba(74, 180, 110, 0.12);
+}
+
+.result-box.info {
+  border-color: rgba(74, 130, 200, 0.35);
+  background: rgba(15, 30, 55, 0.55);
+  box-shadow: 0 0 35px rgba(74, 130, 200, 0.12);
+}
+
+.result-box.error {
+  border-color: rgba(200, 70, 70, 0.35);
+  background: rgba(50, 15, 15, 0.55);
+  box-shadow: 0 0 35px rgba(200, 70, 70, 0.15);
+}
+
+#result-type {
+  font-family: 'Cairo', sans-serif;
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  margin-bottom: 6px;
+}
+
+.result-box.success #result-type { color: rgba(120, 220, 160, 0.7); }
+.result-box.info    #result-type { color: rgba(120, 160, 220, 0.7); }
+.result-box.error   #result-type { color: rgba(220, 120, 120, 0.7); }
+
+#result-subtype {
+  font-family: 'Scheherazade New', serif;
+  font-size: clamp(30px, 7vw, 46px);
+  font-weight: 700;
+  margin-bottom: 10px;
+  line-height: 1.1;
+}
+
+.result-box.success #result-subtype { color: #60e8a0; text-shadow: 0 0 30px rgba(96, 232, 160, 0.6); }
+.result-box.info    #result-subtype { color: #60a8e8; text-shadow: 0 0 30px rgba(96, 168, 232, 0.6); }
+.result-box.error   #result-subtype { color: #e86060; }
+
+#result-explanation {
+  font-family: 'Cairo', sans-serif;
+  font-size: clamp(13px, 2.5vw, 15px);
+  color: var(--text-secondary);
+  line-height: 1.9;
+  font-weight: 400;
+}
+
+/* ═══════════════════════════════════════
+   DIVIDER
+═══════════════════════════════════════ */
+.divider {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 22px 0 16px;
+  opacity: 0.25;
+}
+.divider-line { flex: 1; height: 1px; background: var(--gold); }
+.divider-dot  { width: 4px; height: 4px; border-radius: 50%; background: var(--gold); }
+
+/* ═══════════════════════════════════════
+   REFERENCE GRID
+═══════════════════════════════════════ */
+.reference {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 8px;
+}
+
+.ref-item {
+  background: rgba(0,0,0,0.22);
+  border: 1px solid rgba(200, 169, 110, 0.1);
+  border-radius: 10px;
+  padding: 10px 12px;
+  font-family: 'Cairo', sans-serif;
+  font-size: 11px;
+  color: var(--text-muted);
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  transition: border-color 0.25s, background 0.25s;
+  cursor: default;
+}
+
+.ref-item:hover {
+  border-color: rgba(200, 169, 110, 0.28);
+  background: rgba(200, 169, 110, 0.04);
+}
+
+.ref-item .ref-name {
+  font-size: 16px;
+  font-family: 'Scheherazade New', serif;
+  font-weight: 600;
+  color: var(--gold-dim);
+}
+
+.ref-item .ref-example {
+  font-size: 10.5px;
+  color: rgba(90, 84, 72, 0.8);
+}
+
+/* ═══════════════════════════════════════
+   FOOTER
+═══════════════════════════════════════ */
+.footer {
+  margin-top: 18px;
+  text-align: center;
+  font-family: 'Cairo', sans-serif;
+  font-size: 10.5px;
+  color: var(--text-muted);
+  letter-spacing: 0.08em;
+  opacity: 0.5;
+}
+
+/* ═══════════════════════════════════════
+   SHAKE ANIMATION
+═══════════════════════════════════════ */
+@keyframes shake {
+  0%,100% { transform: translateX(0); }
+  10%     { transform: translateX(-9px) rotate(-0.6deg); }
+  20%     { transform: translateX(8px)  rotate(0.6deg); }
+  30%     { transform: translateX(-7px); }
+  40%     { transform: translateX(6px); }
+  50%     { transform: translateX(-5px); }
+  60%     { transform: translateX(4px); }
+  70%     { transform: translateX(-3px); }
+  80%     { transform: translateX(2px); }
+  90%     { transform: translateX(-1px); }
+}
+.shake { animation: shake 0.65s cubic-bezier(0.36,0.07,0.19,0.97) both; }
+
+@media (max-width: 480px) {
+  .card { padding: 22px 16px 20px; }
+  .reference { grid-template-columns: 1fr 1fr; }
+  #verb-input { font-size: 20px; padding: 14px 14px; }
+}
+</style>
+</head>
+<body>
+
+<canvas id="bg-canvas"></canvas>
+
+<div id="app">
+
+  <div class="header">
+    <div class="header-ornament">
+      <div class="ornament-line"></div>
+      <div class="ornament-diamond"></div>
+      <div class="ornament-line right"></div>
+    </div>
+    <h1 class="app-title">مُصنِّف الأفعال</h1>
+    <p class="app-subtitle">ثلاثي مجرد · تصنيف صرفي دقيق</p>
+  </div>
+
+  <div class="card">
+    <label class="input-label" for="verb-input">أدخل الفعل الماضي (ثلاثة أحرف فقط)</label>
+
+    <input
+      type="text"
+      id="verb-input"
+      autocomplete="off"
+      autocorrect="off"
+      spellcheck="false"
+      placeholder="مثل: كَتَبَ، قال، رمى، وعد"
+    />
+
+    <button id="check-btn">🔍 فحص التصنيف</button>
+
+    <div class="result-box hidden" id="result-box">
+      <div id="result-type"></div>
+      <div id="result-subtype"></div>
+      <div id="result-explanation"></div>
+    </div>
+
+    <div class="divider">
+      <div class="divider-line"></div>
+      <div class="divider-dot"></div>
+      <div class="divider-line"></div>
+    </div>
+
+    <div class="reference">
+      <div class="ref-item">
+        <span class="ref-name">سالم</span>
+        <span class="ref-example">كَتَبَ · ضَرَبَ</span>
+      </div>
+      <div class="ref-item">
+        <span class="ref-name">مهموز</span>
+        <span class="ref-example">أَخَذَ · سَأَلَ</span>
+      </div>
+      <div class="ref-item">
+        <span class="ref-name">مضعّف</span>
+        <span class="ref-example">مَدَّ · رَدَّ</span>
+      </div>
+      <div class="ref-item">
+        <span class="ref-name">مثال</span>
+        <span class="ref-example">وَعَدَ · وَصَلَ</span>
+      </div>
+      <div class="ref-item">
+        <span class="ref-name">أجوف</span>
+        <span class="ref-example">قَالَ · بَاعَ</span>
+      </div>
+      <div class="ref-item">
+        <span class="ref-name">ناقص</span>
+        <span class="ref-example">دَعَا · رَمَى · مَشَى</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="footer">النحو العربي · التصنيف حسب حروف العلة، الهمزة، والتضعيف</div>
+
+</div>
+
+<script>
+// ════════════════════════════════════════
+// CORE ALGORITHM – VERB CLASSIFIER (ONLY TRILITERAL)
+// ════════════════════════════════════════
+
+// حروف العلة (الضعف): الألف، الواو، الياء، والألف المقصورة (ى)
+const WEAK_LETTERS = ['ا', 'و', 'ي', 'ى'];
+// الهمزات بجميع أشكالها
+const HAMZA_CHARS = ['أ', 'إ', 'آ', 'ؤ', 'ئ', 'ء'];
+
+// إزالة التشكيل (الحركات والشدات)
+function stripDiacritics(str) {
+  return str.replace(/[\u064B-\u065F\u0670]/g, '');
+}
+
+// التحقق من أن النص يتكون من حروف عربية فقط
+function isArabicLetter(ch) {
+  const code = ch.charCodeAt(0);
+  return (code >= 0x0621 && code <= 0x064A) || HAMZA_CHARS.includes(ch) || WEAK_LETTERS.includes(ch);
+}
+
+// الدالة الرئيسية للتصنيف
+function classifyTriliteralVerb(verb) {
+  if (!verb || verb.trim() === '') {
+    return { valid: false, error: '✧ الرجاء إدخال فعل ماضٍ ثلاثي ✧' };
+  }
+
+  const raw = verb.trim();
+  const stripped = stripDiacritics(raw);
+  const letters = [...stripped];
+
+  // 1) التأكد من أنه ثلاثي الأحرف الأصلية فقط
+  if (letters.length !== 3) {
+    return { valid: false, error: `⚠️ الفعل يجب أن يكون ثلاثياً مجرداً (3 أحرف أصلية).\nتم إدخال ${letters.length} حرفاً: ${letters.join('')}` };
+  }
+
+  // 2) التأكد من أن كل حرف هو حرف عربي صحيح
+  const nonArabic = letters.find(ch => !isArabicLetter(ch));
+  if (nonArabic) {
+    return { valid: false, error: `❌ الرمز "${nonArabic}" ليس حرفاً عربياً صحيحاً. يُرجى إدخال حروف عربية فقط.` };
+  }
+
+  // تحليل الصفات
+  const hasWeak   = letters.some(l => WEAK_LETTERS.includes(l));
+  const hasHamza  = letters.some(l => HAMZA_CHARS.includes(l));
+  const hasShadda = raw.includes('ّ');
+  const lastTwo   = letters.slice(-2);
+  const twinEnd   = lastTwo.length === 2 && lastTwo[0] === lastTwo[1];
+
+  if (!hasWeak) {
+    if (hasHamza) {
+      return {
+        valid: true, type: 'صحيح', subtype: 'مهموز', verb: raw,
+        explanation: `"${raw}" → فعل صحيح مهموز، لأن أحد أحرفه الأصلية همزة.`
+      };
+    }
+    if (hasShadda || twinEnd) {
+      return {
+        valid: true, type: 'صحيح', subtype: 'مضعَّف', verb: raw,
+        explanation: `"${raw}" → فعل صحيح مضعَّف، لأن حرف العين واللام من جنس واحد ومُدغمان.`
+      };
+    }
+    return {
+      valid: true, type: 'صحيح', subtype: 'سالم', verb: raw,
+      explanation: `"${raw}" → فعل صحيح سالم، خالٍ من الهمزة والتضعيف وحروف العلة.`
+    };
+  }
+
+  // معتل
+  const weakIdx = letters.findIndex(l => WEAK_LETTERS.includes(l));
+  if (weakIdx === 0) {
+    return {
+      valid: true, type: 'معتل', subtype: 'مثال', verb: raw,
+      explanation: `"${raw}" → فعل معتل مثال، لأن الحرف الأول (فاء الكلمة) حرف علة.`
+    };
+  } else if (weakIdx === 2) {
+    return {
+      valid: true, type: 'معتل', subtype: 'ناقص', verb: raw,
+      explanation: `"${raw}" → فعل معتل ناقص، لأن الحرف الأخير (لام الفعل) حرف علة.`
+    };
+  } else {
+    return {
+      valid: true, type: 'معتل', subtype: 'أجوف', verb: raw,
+      explanation: `"${raw}" → فعل معتل أجوف، لأن الحرف الأوسط (عين الفعل) حرف علة.`
+    };
+  }
+}
+
+// ════════════════════════════════════════
+// UI CONTROLLER
+// ════════════════════════════════════════
+function showResult(result) {
+  const box  = document.getElementById('result-box');
+  const type = document.getElementById('result-type');
+  const sub  = document.getElementById('result-subtype');
+  const expl = document.getElementById('result-explanation');
+
+  box.className = 'result-box';
+
+  if (!result.valid) {
+    box.classList.add('error');
+    type.textContent = '⚠️ خطأ في الإدخال';
+    sub.textContent  = 'غير مقبول';
+    expl.textContent = result.error;
+    shakeEl(document.getElementById('verb-input'));
+  } else {
+    box.classList.add(result.type === 'صحيح' ? 'success' : 'info');
+    type.textContent = `فعل ${result.type}`;
+    sub.textContent  = result.subtype;
+    expl.textContent = result.explanation;
+  }
+
+  requestAnimationFrame(() => box.classList.add('animate-in'));
+}
+
+function shakeEl(el) {
+  el.classList.remove('shake');
+  void el.offsetWidth;
+  el.classList.add('shake');
+  el.addEventListener('animationend', () => el.classList.remove('shake'), { once: true });
+}
+
+function clearResult() {
+  const box = document.getElementById('result-box');
+  box.className = 'result-box hidden';
+}
+
+// ════════════════════════════════════════
+// BACKGROUND PARTICLES (جماليات)
+// ════════════════════════════════════════
+function initBgParticles() {
+  const canvas = document.getElementById('bg-canvas');
+  const ctx    = canvas.getContext('2d');
+  canvas.width  = window.innerWidth;
+  canvas.height = window.innerHeight;
+
+  const CHARS = [...'ابتثجحخدذرزسشصضطظعغفقكلمنهوي'];
+  const pts   = Array.from({ length: 40 }, () => ({
+    x:     Math.random() * canvas.width,
+    y:     Math.random() * canvas.height,
+    char:  CHARS[Math.floor(Math.random() * CHARS.length)],
+    size:  11 + Math.random() * 22,
+    alpha: 0.03 + Math.random() * 0.07,
+    speed: 0.08 + Math.random() * 0.28,
+    drift: (Math.random() - 0.5) * 0.25,
+  }));
+
+  function draw() {
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    pts.forEach(p => {
+      ctx.save();
+      ctx.globalAlpha = p.alpha;
+      ctx.fillStyle   = '#c8a96e';
+      ctx.font = `${p.size}px 'Scheherazade New', serif`;
+      ctx.textAlign = 'center';
+      ctx.fillText(p.char, p.x, p.y);
+      ctx.restore();
+      p.y -= p.speed;
+      p.x += p.drift;
+      if (p.y < -30) {
+        p.y    = canvas.height + 30;
+        p.x    = Math.random() * canvas.width;
+        p.char = CHARS[Math.floor(Math.random() * CHARS.length)];
+      }
+      if (p.x < -20) p.x = canvas.width + 20;
+      if (p.x > canvas.width + 20) p.x = -20;
+    });
+    requestAnimationFrame(draw);
+  }
+  draw();
+
+  window.addEventListener('resize', () => {
+    canvas.width  = window.innerWidth;
+    canvas.height = window.innerHeight;
+  });
+}
+
+// ════════════════════════════════════════
+// GLITCH / DESTRUCTION EFFECT (بطيء ودراماتيكي)
+// ════════════════════════════════════════
+// 🔴 قم بتغيير هذا الرابط إلى الرابط الذي تريد التوجيه إليه بعد التحطم 🔴
+const REDIRECT_URL = "https://example.com/your-destination-page";  // <--- غيّر هذا الرابط
+
+function triggerSlowGlitch(appEl) {
+  // تعطيل التفاعلات فوراً
+  const input = document.getElementById('verb-input');
+  const btn = document.getElementById('check-btn');
+  input.disabled = true;
+  btn.disabled = true;
+
+  const canvas = document.createElement('canvas');
+  canvas.id = 'glitch-canvas';
+  canvas.width  = window.innerWidth;
+  canvas.height = window.innerHeight;
+  Object.assign(canvas.style, {
+    position: 'fixed', top: '0', left: '0',
+    width: '100vw', height: '100vh',
+    zIndex: '9999', pointerEvents: 'none'
+  });
+  document.body.appendChild(canvas);
+  const ctx = canvas.getContext('2d');
+
+  // بناء أجزاء متطايرة من عناصر الواجهة (نصوص وأشكال)
+  const fragments = buildRichFragments();
+  let frame = 0;
+  const TOTAL_FRAMES = 340;  // أكثر بطئاً (حوالي 5-6 ثواني)
+  let sx = 0, sy = 0;
+
+  // بدء تلاشي التطبيق الرئيسي ببطء
+  appEl.style.transition = 'opacity 1.2s cubic-bezier(0.2, 1, 0.3, 1)';
+  appEl.style.opacity = '0.5';
+  setTimeout(() => { appEl.style.opacity = '0'; }, 400);
+
+  function easeOutCubic(t) { return 1 - Math.pow(1 - t, 3); }
+
+  function drawGlitch() {
+    const progress = frame / TOTAL_FRAMES;
+    const eased = easeOutCubic(Math.min(progress, 1));
+
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+    // خلفية داكنة متدرجة العتامة
+    ctx.fillStyle = `rgba(8, 8, 14, ${Math.min(eased * 2.2, 0.98)})`;
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+    // اهتزاز بطيء في المراحل الأولى
+    if (progress < 0.55) {
+      const intensity = Math.sin(frame * 0.35) * (1 - progress) * 22;
+      sx = (Math.random() - 0.5) * intensity;
+      sy = (Math.random() - 0.5) * intensity;
+    } else {
+      sx *= 0.94;
+      sy *= 0.94;
+    }
+
+    ctx.save();
+    ctx.translate(sx, sy);
+
+    // رسم الأجزاء المتطايرة
+    fragments.forEach((f, i) => {
+      const delay = i * 0.045;
+      let localProgress = (progress - delay) / (1 - delay);
+      if (localProgress <= 0) return;
+      localProgress = Math.min(localProgress, 1);
+      const fp = easeOutCubic(localProgress);
+
+      f.vy += 0.75 + fp * 3.2;
+      f.vx += (Math.random() - 0.5) * 0.45;
+      f.rot += f.rotS * (1 + fp * 2.5);
+      f.y   += f.vy;
+      f.x   += f.vx;
+      f.alpha = Math.max(0, 1 - fp * 1.7);
+
+      if (f.alpha <= 0) return;
+
+      ctx.save();
+      ctx.globalAlpha = f.alpha;
+      ctx.translate(f.x + f.w / 2, f.y + f.h / 2);
+      ctx.rotate(f.rot);
+
+      if (Math.random() < 0.09 && progress < 0.5) {
+        ctx.shadowColor = '#ff44aa';
+        ctx.shadowBlur = 18;
+      }
+
+      ctx.fillStyle = f.bg;
+      ctx.beginPath();
+      ctx.roundRect(-f.w/2, -f.h/2, f.w, f.h, 8);
+      ctx.fill();
+
+      ctx.fillStyle = f.color;
+      ctx.font = `${f.fs}px 'Scheherazade New', 'Cairo', monospace`;
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillText(f.text, 0, 0);
+      ctx.restore();
+    });
+
+    // شرائط glitch عشوائية
+    if (progress < 0.7 && Math.random() < 0.22) {
+      const bars = Math.floor(Math.random() * 5) + 2;
+      const colors = ['#00ffff', '#ff00cc', '#ffff33', '#ff6644', '#44ff88'];
+      for (let i = 0; i < bars; i++) {
+        ctx.save();
+        ctx.globalAlpha = Math.random() * 0.45 + 0.15;
+        ctx.fillStyle = colors[Math.floor(Math.random() * colors.length)];
+        ctx.fillRect(0, Math.random() * canvas.height, canvas.width, Math.random() * 6 + 2);
+        ctx.restore();
+      }
+    }
+
+    // تشويش خفيف (noise)
+    if (progress < 0.55) {
+      ctx.save();
+      ctx.globalAlpha = 0.05;
+      for (let n = 0; n < 220; n++) {
+        ctx.fillStyle = Math.random() > 0.6 ? '#fff' : '#000';
+        ctx.fillRect(Math.random()*canvas.width, Math.random()*canvas.height, Math.random()*3, Math.random()*3);
+      }
+      ctx.restore();
+    }
+
+    // نص مركزي متموج
+    if (progress > 0.2 && progress < 0.8) {
+      const glitchTexts = ['ERROR', '▓▓▓', 'تحطم', '░░░', '崩壊', 'FAIL', '404'];
+      const gt = glitchTexts[Math.floor(frame / 12) % glitchTexts.length];
+      ctx.save();
+      ctx.globalAlpha = Math.sin(frame * 0.2) * 0.45 + 0.55;
+      ctx.font = `bold ${52 + Math.sin(frame * 0.12) * 14}px monospace`;
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillStyle = '#ff66cc';
+      ctx.shadowColor = '#ff00aa';
+      ctx.shadowBlur = 28;
+      ctx.fillText(gt, canvas.width/2 + (Math.random()-0.5)*10, canvas.height/2);
+      ctx.restore();
+    }
+
+    ctx.restore(); // نهاية التحريك
+
+    // وميض أبيض ثم أسود في النهاية
+    if (progress > 0.78) {
+      const flash = (progress - 0.78) / 0.22;
+      if (flash < 0.28) {
+        ctx.fillStyle = `rgba(255, 255, 255, ${(flash / 0.28) * 0.95})`;
+      } else {
+        ctx.fillStyle = `rgba(0, 0, 0, ${((flash - 0.28) / 0.72)})`;
+      }
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+    }
+
+    frame++;
+    if (frame < TOTAL_FRAMES) {
+      requestAnimationFrame(drawGlitch);
+    } else {
+      // انتهى التدمير، التوجيه إلى الرابط
+      setTimeout(() => {
+        window.location.href = REDIRECT_URL;
+      }, 180);
+    }
+  }
+
+  requestAnimationFrame(drawGlitch);
+}
+
+// بناء أجزاء من نصوص الواجهة لتمثيل التمزق
+function buildRichFragments() {
+  const W = window.innerWidth;
+  const H = window.innerHeight;
+  const labels = [
+    'مُصنِّف الأفعال', 'فحص', 'أدخل فعلًا', 'صحيح', 'معتل',
+    'سالم', 'مهموز', 'أجوف', 'مثال', 'ناقص', 'مضعّف',
+    'ثلاثي مجرد', 'كسر', 'تمزق', 'ERROR', 'تحطم', '▓▓▓', '░▓░'
+  ];
+  const frags = [];
+  for (let i = 0; i < 26; i++) {
+    const text = labels[i % labels.length];
+    const w = 70 + Math.random() * 230;
+    const h = 36 + Math.random() * 58;
+    frags.push({
+      x:     Math.random() * (W - w),
+      y:     H * 0.1 + Math.random() * H * 0.7,
+      w, h,
+      vx:    (Math.random() - 0.5) * 3.2,
+      vy:    -3.2 + Math.random() * 3.5,
+      rot:   0,
+      rotS:  (Math.random() - 0.5) * 0.16,
+      alpha: 1,
+      text,
+      color: ['#e8d5a3','#ffb86b','#9b87f0','#60e8a0','#ff88b0'][i % 5],
+      bg:    `rgba(${20+Math.random()*40}, ${20+Math.random()*30}, ${30+Math.random()*45}, 0.92)`,
+      fs:    14 + Math.random() * 16,
+    });
+  }
+  return frags;
+}
+
+// ════════════════════════════════════════
+// MAIN – تشغيل التطبيق مع تفعيل الكود السري
+// ════════════════════════════════════════
+document.addEventListener('DOMContentLoaded', () => {
+  initBgParticles();
+
+  const input = document.getElementById('verb-input');
+  const btn   = document.getElementById('check-btn');
+  const appEl = document.getElementById('app');
+
+  function handleClassification() {
+    const val = input.value.trim();
+    if (val === '1234') {
+      // 🧨 تفعيل تأثير التحطم البطيء
+      triggerSlowGlitch(appEl);
+      return;
+    }
+    if (!val) {
+      showResult({ valid: false, error: '✧ اكتب الفعل أولاً ✧' });
+      return;
+    }
+    const result = classifyTriliteralVerb(val);
+    showResult(result);
+  }
+
+  btn.addEventListener('click', handleClassification);
+  input.addEventListener('keydown', (e) => { if (e.key === 'Enter') handleClassification(); });
+  input.addEventListener('input', () => { if (!input.value.trim()) clearResult(); });
+});
+
+// helper for rounded rect
+if (!CanvasRenderingContext2D.prototype.roundRect) {
+  CanvasRenderingContext2D.prototype.roundRect = function(x, y, w, h, r) {
+    if (w < 2 * r) r = w / 2;
+    if (h < 2 * r) r = h / 2;
+    this.moveTo(x+r, y);
+    this.lineTo(x+w-r, y);
+    this.quadraticCurveTo(x+w, y, x+w, y+r);
+    this.lineTo(x+w, y+h-r);
+    this.quadraticCurveTo(x+w, y+h, x+w-r, y+h);
+    this.lineTo(x+r, y+h);
+    this.quadraticCurveTo(x, y+h, x, y+h-r);
+    this.lineTo(x, y+r);
+    this.quadraticCurveTo(x, y, x+r, y);
+    return this;
+  };
+}
+</script>
+</body>
+</html>
