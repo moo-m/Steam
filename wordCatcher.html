@@ -1,0 +1,1180 @@
+<!DOCTYPE html>
+
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>صائد الكلمات — لعبة النحو العربي</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Amiri:wght@400;700&family=Tajawal:wght@400;500;700;800;900&display=swap');
+
+:root {
+–gold: #FFD700; –gold-dim: #C9A227;
+–purple: #4A1080; –purple-light: #7B2FBE; –purple-glow: #9B4DCA;
+–teal: #00CED1; –teal-dim: #00999C;
+–bg-dark: #0A0318; –bg-mid: #130530;
+–red: #FF4444; –green: #44FF88;
+}
+
+- { margin:0; padding:0; box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
+
+html, body {
+width:100%; height:100%; overflow:hidden;
+background:var(–bg-dark); font-family:‘Tajawal’,sans-serif;
+user-select:none; -webkit-user-select:none; touch-action:none;
+}
+
+#gameWrapper { position:fixed; inset:0; width:100vw; height:100vh; overflow:hidden; }
+#bgCanvas { position:absolute; top:0; left:0; width:100%; height:100%; z-index:0; }
+#gameCanvas { position:absolute; top:0; left:0; width:100%; height:100%; z-index:1; touch-action:none; }
+
+/* HUD */
+#hud {
+position:absolute; top:0; left:0; right:0;
+padding:10px 14px 6px;
+background:linear-gradient(to bottom,rgba(10,3,24,0.97) 85%,transparent);
+z-index:10; direction:rtl;
+}
+#missionBar {
+text-align:center; font-family:‘Amiri’,serif;
+font-size:clamp(13px,3.5vw,17px); color:var(–gold);
+text-shadow:0 0 10px rgba(255,215,0,0.6);
+background:rgba(74,16,128,0.7); border:1px solid rgba(255,215,0,0.4);
+border-radius:20px; padding:5px 16px; margin-bottom:7px;
+}
+#statsRow { display:flex; justify-content:space-between; align-items:center; gap:5px; }
+.stat-box {
+background:rgba(74,16,128,0.55); border:1px solid rgba(155,77,202,0.4);
+border-radius:10px; padding:3px 6px; text-align:center; flex:1; min-width:0;
+}
+.stat-label { font-size:clamp(8px,2vw,10px); color:rgba(255,255,255,0.5); display:block; line-height:1.1; }
+.stat-value { font-size:clamp(13px,3.5vw,16px); font-weight:900; color:var(–gold); display:block; line-height:1.2; }
+#timerBar { height:4px; background:rgba(255,255,255,0.1); border-radius:2px; margin-top:6px; overflow:hidden; }
+#timerFill { height:100%; background:linear-gradient(to left,var(–teal),var(–purple-glow)); border-radius:2px; transition:width 0.5s linear,background 0.5s; }
+
+/* Mission Bubble */
+#missionBubble {
+position:absolute; top:50%; left:50%; transform:translate(-50%,-50%) scale(0.5);
+z-index:30; text-align:center; pointer-events:none;
+background:rgba(74,16,128,0.97); border:3px solid var(–gold);
+border-radius:50px; padding:18px 40px;
+box-shadow:0 0 60px rgba(255,215,0,0.5), 0 0 120px rgba(155,77,202,0.4);
+opacity:0; transition:all 0.25s cubic-bezier(0.34,1.56,0.64,1);
+direction:rtl; white-space:nowrap;
+}
+#missionBubble.show {
+opacity:1; transform:translate(-50%,-50%) scale(1);
+}
+#missionBubbleText {
+font-family:‘Amiri’,serif; font-size:clamp(22px,6vw,36px);
+color:var(–gold); text-shadow:0 0 20px rgba(255,215,0,0.8);
+font-weight:700;
+}
+#missionBubbleLabel {
+font-size:clamp(11px,2.5vw,13px); color:rgba(255,255,255,0.6);
+margin-bottom:6px; letter-spacing:1px;
+}
+
+/* Pause button */
+#pauseBtn {
+position:absolute; top:12px; left:14px; z-index:11;
+background:rgba(74,16,128,0.7); border:1px solid rgba(155,77,202,0.5);
+border-radius:8px; color:var(–gold); font-size:18px;
+width:34px; height:34px; display:flex; align-items:center;
+justify-content:center; cursor:pointer;
+}
+
+/* Combo */
+#comboDisplay { position:absolute; top:100px; right:14px; z-index:12; text-align:center; pointer-events:none; }
+#comboText {
+font-family:‘Amiri’,serif; font-size:clamp(16px,4vw,22px); font-weight:700;
+color:var(–gold); text-shadow:0 0 10px rgba(255,215,0,0.8);
+opacity:0; transform:scale(0.8); transition:all 0.3s;
+}
+#comboText.show { opacity:1; transform:scale(1); }
+
+/* Educational popup */
+#educPopup {
+position:absolute; bottom:120px; left:50%; transform:translateX(-50%);
+background:rgba(10,3,24,0.95); border:1px solid var(–purple-glow);
+border-radius:14px; padding:10px 18px;
+max-width:min(300px,85vw); width:max-content; text-align:center;
+z-index:15; color:rgba(255,255,255,0.9); font-family:‘Amiri’,serif;
+font-size:clamp(12px,3vw,15px); line-height:1.6;
+box-shadow:0 0 20px rgba(155,77,202,0.5);
+opacity:0; pointer-events:none; transition:opacity 0.3s; direction:rtl; white-space:normal;
+}
+#educPopup.show { opacity:1; }
+
+/* Overlays */
+.overlay {
+position:absolute; inset:0; z-index:20;
+display:flex; flex-direction:column; align-items:center; justify-content:center;
+background:rgba(10,3,24,0.95); padding:20px; text-align:center;
+direction:rtl; backdrop-filter:blur(8px); overflow-y:auto;
+}
+.overlay.hidden { display:none; }
+.overlay h1 { font-family:‘Amiri’,serif; font-size:clamp(28px,8vw,40px); color:var(–gold); text-shadow:0 0 20px rgba(255,215,0,0.6); margin-bottom:4px; }
+.overlay h2 { font-family:‘Amiri’,serif; font-size:clamp(16px,5vw,22px); color:var(–teal); margin-bottom:14px; text-shadow:0 0 10px rgba(0,206,209,0.5); }
+.overlay p { color:rgba(255,255,255,0.7); font-size:clamp(12px,3vw,14px); line-height:1.7; max-width:340px; margin-bottom:14px; }
+
+.btn {
+background:linear-gradient(135deg,var(–purple-light),var(–purple));
+color:var(–gold); border:2px solid var(–gold-dim); border-radius:25px;
+padding:11px 30px; font-family:‘Tajawal’,sans-serif;
+font-size:clamp(13px,3.5vw,16px); font-weight:700; cursor:pointer; margin:5px;
+box-shadow:0 0 20px rgba(123,47,190,0.5); transition:all 0.2s;
+}
+.btn:active { transform:scale(0.96); }
+.btn.secondary { background:rgba(0,150,160,0.3); border-color:var(–teal-dim); color:var(–teal); }
+
+.levelGrid { display:flex; flex-direction:column; gap:9px; width:100%; max-width:340px; }
+.levelCard {
+background:rgba(74,16,128,0.45); border:1px solid rgba(155,77,202,0.5);
+border-radius:14px; padding:12px 16px; cursor:pointer; transition:all 0.2s;
+display:flex; align-items:center; gap:12px; text-align:right; direction:rtl;
+}
+.levelCard:active { background:rgba(123,47,190,0.5); border-color:var(–gold-dim); transform:scale(0.98); }
+.levelNum { font-size:26px; min-width:34px; }
+.levelInfo { flex:1; }
+.levelTitle { font-size:clamp(14px,4vw,17px); font-weight:700; color:var(–gold); }
+.levelDesc { font-size:clamp(10px,2.5vw,12px); color:rgba(255,255,255,0.5); margin-top:2px; }
+
+.resultGrid { display:grid; grid-template-columns:1fr 1fr; gap:8px; width:100%; max-width:300px; margin:10px 0; }
+.resultItem { background:rgba(74,16,128,0.4); border:1px solid rgba(155,77,202,0.3); border-radius:10px; padding:8px; text-align:center; }
+.resultItem .lbl { font-size:clamp(9px,2.5vw,11px); color:rgba(255,255,255,0.5); }
+.resultItem .val { font-size:clamp(16px,4.5vw,20px); font-weight:900; color:var(–gold); }
+.stars { font-size:clamp(22px,6vw,30px); letter-spacing:4px; margin:4px 0; }
+
+#analysisText {
+font-family:‘Amiri’,serif; font-size:clamp(12px,3.5vw,15px); color:var(–teal);
+background:rgba(0,100,120,0.2); border:1px solid rgba(0,206,209,0.3);
+border-radius:10px; padding:8px 14px; max-width:300px; text-align:center;
+line-height:1.6; margin:6px 0; direction:rtl;
+}
+#highScoreDisplay { font-size:clamp(10px,2.5vw,13px); color:var(–gold-dim); margin-top:4px; }
+
+#pauseMenu {
+position:absolute; inset:0; z-index:25;
+display:flex; flex-direction:column; align-items:center; justify-content:center;
+background:rgba(10,3,24,0.92); backdrop-filter:blur(8px); gap:10px; direction:rtl;
+}
+#pauseMenu.hidden { display:none; }
+#pauseMenu h2 { font-family:‘Amiri’,serif; font-size:clamp(22px,6vw,30px); color:var(–gold); margin-bottom:10px; }
+
+#swipeHint {
+position:absolute; bottom:30px; left:50%; transform:translateX(-50%);
+color:rgba(255,255,255,0.35); font-size:clamp(11px,3vw,13px);
+font-family:‘Tajawal’,sans-serif; text-align:center; pointer-events:none;
+z-index:10; white-space:nowrap; direction:rtl; transition:opacity 1s;
+}
+
+/* Genie movement trail */
+@keyframes trailFade { from { opacity:0.5; transform:scale(1); } to { opacity:0; transform:scale(0.3); } }
+</style>
+
+</head>
+<body>
+<div id="gameWrapper">
+  <canvas id="bgCanvas"></canvas>
+  <canvas id="gameCanvas"></canvas>
+
+  <!-- HUD -->
+
+  <div id="hud">
+    <div id="missionBar">✨ اصطد الأفعال فقط ✨</div>
+    <div id="statsRow">
+      <div class="stat-box"><span class="stat-label">النقاط</span><span class="stat-value" id="scoreVal">0</span></div>
+      <div class="stat-box"><span class="stat-label">التسلسل</span><span class="stat-value" id="comboVal">×1</span></div>
+      <div class="stat-box"><span class="stat-label">الوقت</span><span class="stat-value" id="timerVal">40</span></div>
+      <div class="stat-box"><span class="stat-label">الأخطاء</span><span class="stat-value" id="mistakesVal" style="color:#FF8888">0</span></div>
+      <div class="stat-box"><span class="stat-label">الدقة</span><span class="stat-value" id="accuracyVal">100%</span></div>
+    </div>
+    <div id="timerBar"><div id="timerFill" style="width:100%"></div></div>
+  </div>
+
+  <div id="pauseBtn" onclick="togglePause()">⏸</div>
+  <div id="comboDisplay"><div id="comboText">🔥 ×2</div></div>
+
+  <!-- Mission Bubble (1-second centered pop) -->
+
+  <div id="missionBubble">
+    <div id="missionBubbleLabel">🎯 مهمة جديدة</div>
+    <div id="missionBubbleText"></div>
+  </div>
+
+  <div id="educPopup"></div>
+  <div id="swipeHint">👈 مرّر للتحرك 👉</div>
+
+  <!-- Start Screen -->
+
+  <div class="overlay" id="startScreen">
+    <h1> صائد الكلمات</h1>
+    <h2>لعبة النحو العربي</h2>
+    <p>حرّك بالتمرير يميناً أو يساراً<br>لتصطاد الكلمات الصحيحة وفقاً للمهمة.<br>تعلّم قواعد اللغة العربية بطريقة ممتعة!</p>
+    <div class="levelGrid">
+      <div class="levelCard" onclick="startLevel(1)">
+        <div class="levelNum">🌙</div>
+        <div class="levelInfo">
+          <div class="levelTitle">المستوى الأول — مبتدئ</div>
+          <div class="levelDesc">الأسماء والأفعال • 40 ثانية • سهل</div>
+        </div>
+      </div>
+      <div class="levelCard" onclick="startLevel(2)">
+        <div class="levelNum">⭐</div>
+        <div class="levelInfo">
+          <div class="levelTitle">المستوى الثاني — متوسط</div>
+          <div class="levelDesc">الأفعال الصحيحة والمعتلة • 50 ثانية</div>
+        </div>
+      </div>
+      <div class="levelCard" onclick="startLevel(3)">
+        <div class="levelNum">🔥</div>
+        <div class="levelInfo">
+          <div class="levelTitle">المستوى الثالث — متقدم</div>
+          <div class="levelDesc">جميع التصنيفات النحوية • 60 ثانية • صعب</div>
+        </div>
+      </div>
+    </div>
+    <div id="highScoreDisplay"></div>
+  </div>
+
+  <!-- End Screen -->
+
+  <div class="overlay hidden" id="endScreen">
+    <h1 id="endTitle">🏆 أحسنت!</h1>
+    <div class="stars" id="starsDisplay">⭐⭐⭐</div>
+    <div class="resultGrid">
+      <div class="resultItem"><div class="lbl">النقاط</div><div class="val" id="resFinalScore">0</div></div>
+      <div class="resultItem"><div class="lbl">الدقة</div><div class="val" id="resAccuracy">0%</div></div>
+      <div class="resultItem"><div class="lbl">✅ صحيح</div><div class="val" id="resCorrect" style="color:#44FF88">0</div></div>
+      <div class="resultItem"><div class="lbl">❌ خطأ</div><div class="val" id="resWrong" style="color:#FF4444">0</div></div>
+      <div class="resultItem"><div class="lbl">🏃 فائت</div><div class="val" id="resMissed" style="color:#FFAA44">0</div></div>
+      <div class="resultItem"><div class="lbl">🔥 أفضل تسلسل</div><div class="val" id="resBestCombo">0</div></div>
+    </div>
+    <div id="analysisText">تحليل الأداء</div>
+    <div style="display:flex;gap:8px;flex-wrap:wrap;justify-content:center;margin-top:8px">
+      <button class="btn" onclick="retryLevel()">🔄 إعادة</button>
+      <button class="btn secondary" onclick="goHome()">🏠 القائمة</button>
+    </div>
+  </div>
+
+  <!-- Pause Menu -->
+
+  <div id="pauseMenu" class="hidden">
+    <h2>⏸ متوقف</h2>
+    <button class="btn" onclick="togglePause()">▶ استمرار</button>
+    <button class="btn" onclick="retryLevel()">🔄 إعادة التشغيل</button>
+    <button class="btn secondary" onclick="goHome()">🏠 القائمة الرئيسية</button>
+    <div style="display:flex;align-items:center;gap:10px;margin-top:8px">
+      <span style="color:rgba(255,255,255,0.6);font-size:14px">الصوت</span>
+      <div id="soundToggle" onclick="toggleSound()" style="cursor:pointer;font-size:26px">🔊</div>
+    </div>
+  </div>
+</div>
+
+<script>
+// ═══════════════════════════════════════════════
+//  WORD DATABASE
+// ═══════════════════════════════════════════════
+const WORD_DB = [
+  {word:"كتاب",type:"اسم",category:"اسم",subCategory:"جامد"},
+  {word:"مدرسة",type:"اسم",category:"اسم",subCategory:"جامد"},
+  {word:"قلم",type:"اسم",category:"اسم",subCategory:"جامد"},
+  {word:"شجرة",type:"اسم",category:"اسم",subCategory:"جامد"},
+  {word:"بيت",type:"اسم",category:"اسم",subCategory:"جامد"},
+  {word:"ولد",type:"اسم",category:"اسم",subCategory:"جامد"},
+  {word:"بنت",type:"اسم",category:"اسم",subCategory:"جامد"},
+  {word:"سماء",type:"اسم",category:"اسم",subCategory:"جامد"},
+  {word:"أرض",type:"اسم",category:"اسم",subCategory:"جامد"},
+  {word:"نهر",type:"اسم",category:"اسم",subCategory:"جامد"},
+  {word:"جبل",type:"اسم",category:"اسم",subCategory:"جامد"},
+  {word:"بحر",type:"اسم",category:"اسم",subCategory:"جامد"},
+  {word:"طائر",type:"اسم",category:"اسم",subCategory:"جامد"},
+  {word:"قمر",type:"اسم",category:"اسم",subCategory:"جامد"},
+  {word:"شمس",type:"اسم",category:"اسم",subCategory:"جامد"},
+  {word:"نجوم",type:"اسم",category:"اسم",subCategory:"جامد"},
+  {word:"علم",type:"اسم",category:"اسم",subCategory:"جامد"},
+  {word:"وردة",type:"اسم",category:"اسم",subCategory:"جامد"},
+  {word:"باب",type:"اسم",category:"اسم",subCategory:"جامد"},
+  {word:"سيارة",type:"اسم",category:"اسم",subCategory:"جامد"},
+  {word:"في",type:"حرف",category:"حرف",subCategory:"جر"},
+  {word:"من",type:"حرف",category:"حرف",subCategory:"جر"},
+  {word:"إلى",type:"حرف",category:"حرف",subCategory:"جر"},
+  {word:"هل",type:"حرف",category:"حرف",subCategory:"استفهام"},
+  {word:"لم",type:"حرف",category:"حرف",subCategory:"جزم"},
+  {word:"لن",type:"حرف",category:"حرف",subCategory:"نصب"},
+  {word:"عن",type:"حرف",category:"حرف",subCategory:"جر"},
+  {word:"على",type:"حرف",category:"حرف",subCategory:"جر"},
+  {word:"لا",type:"حرف",category:"حرف",subCategory:"نهي"},
+  {word:"ما",type:"حرف",category:"حرف",subCategory:"نفي"},
+  {word:"أن",type:"حرف",category:"حرف",subCategory:"مصدري"},
+  {word:"إن",type:"حرف",category:"حرف",subCategory:"شرط"},
+  {word:"كَتَبَ",type:"فعل",category:"صحيح",subCategory:"سالم"},
+  {word:"جَلَسَ",type:"فعل",category:"صحيح",subCategory:"سالم"},
+  {word:"نَصَرَ",type:"فعل",category:"صحيح",subCategory:"سالم"},
+  {word:"فَتَحَ",type:"فعل",category:"صحيح",subCategory:"سالم"},
+  {word:"عَلِمَ",type:"فعل",category:"صحيح",subCategory:"سالم"},
+  {word:"دَرَسَ",type:"فعل",category:"صحيح",subCategory:"سالم"},
+  {word:"خَرَجَ",type:"فعل",category:"صحيح",subCategory:"سالم"},
+  {word:"فَهِمَ",type:"فعل",category:"صحيح",subCategory:"سالم"},
+  {word:"حَمَلَ",type:"فعل",category:"صحيح",subCategory:"سالم"},
+  {word:"لَعِبَ",type:"فعل",category:"صحيح",subCategory:"سالم"},
+  {word:"أَكَلَ",type:"فعل",category:"صحيح",subCategory:"مهموز"},
+  {word:"أَمَرَ",type:"فعل",category:"صحيح",subCategory:"مهموز"},
+  {word:"سَأَلَ",type:"فعل",category:"صحيح",subCategory:"مهموز"},
+  {word:"قَرَأَ",type:"فعل",category:"صحيح",subCategory:"مهموز"},
+  {word:"بَدَأَ",type:"فعل",category:"صحيح",subCategory:"مهموز"},
+  {word:"أَخَذَ",type:"فعل",category:"صحيح",subCategory:"مهموز"},
+  {word:"أَمِنَ",type:"فعل",category:"صحيح",subCategory:"مهموز"},
+  {word:"مَدَّ",type:"فعل",category:"صحيح",subCategory:"مضعف"},
+  {word:"رَدَّ",type:"فعل",category:"صحيح",subCategory:"مضعف"},
+  {word:"شَكَّ",type:"فعل",category:"صحيح",subCategory:"مضعف"},
+  {word:"ظَنَّ",type:"فعل",category:"صحيح",subCategory:"مضعف"},
+  {word:"حَلَّ",type:"فعل",category:"صحيح",subCategory:"مضعف"},
+  {word:"عَدَّ",type:"فعل",category:"صحيح",subCategory:"مضعف"},
+  {word:"مَرَّ",type:"فعل",category:"صحيح",subCategory:"مضعف"},
+  {word:"وَجَدَ",type:"فعل",category:"معتل",subCategory:"مثال"},
+  {word:"وَصَلَ",type:"فعل",category:"معتل",subCategory:"مثال"},
+  {word:"وَلَدَ",type:"فعل",category:"معتل",subCategory:"مثال"},
+  {word:"وَضَعَ",type:"فعل",category:"معتل",subCategory:"مثال"},
+  {word:"وَقَفَ",type:"فعل",category:"معتل",subCategory:"مثال"},
+  {word:"يَسَّرَ",type:"فعل",category:"معتل",subCategory:"مثال"},
+  {word:"وَعَدَ",type:"فعل",category:"معتل",subCategory:"مثال"},
+  {word:"قَالَ",type:"فعل",category:"معتل",subCategory:"أجوف"},
+  {word:"نَامَ",type:"فعل",category:"معتل",subCategory:"أجوف"},
+  {word:"بَاعَ",type:"فعل",category:"معتل",subCategory:"أجوف"},
+  {word:"طَارَ",type:"فعل",category:"معتل",subCategory:"أجوف"},
+  {word:"سَارَ",type:"فعل",category:"معتل",subCategory:"أجوف"},
+  {word:"زَادَ",type:"فعل",category:"معتل",subCategory:"أجوف"},
+  {word:"جَاءَ",type:"فعل",category:"معتل",subCategory:"أجوف"},
+  {word:"خَافَ",type:"فعل",category:"معتل",subCategory:"أجوف"},
+  {word:"دَعَا",type:"فعل",category:"معتل",subCategory:"ناقص"},
+  {word:"مَشَى",type:"فعل",category:"معتل",subCategory:"ناقص"},
+  {word:"رَمَى",type:"فعل",category:"معتل",subCategory:"ناقص"},
+  {word:"بَنَى",type:"فعل",category:"معتل",subCategory:"ناقص"},
+  {word:"نَسِيَ",type:"فعل",category:"معتل",subCategory:"ناقص"},
+  {word:"لَقِيَ",type:"فعل",category:"معتل",subCategory:"ناقص"},
+  {word:"رَجَا",type:"فعل",category:"معتل",subCategory:"ناقص"},
+  {word:"سَعَى",type:"فعل",category:"معتل",subCategory:"ناقص"},
+];
+
+const EXPLAIN = {
+  "اسم":    (w) => `"${w.word}": اسم — يدلّ على ذات أو معنى دون زمن`,
+  "حرف":   (w) => `"${w.word}": حرف — لا يُفهم معناه إلا مع غيره`,
+  "سالم":  (w) => `"${w.word}": فعل صحيح سالم — خالٍ من الهمزة والتضعيف والعلة`,
+  "مهموز": (w) => `"${w.word}": فعل مهموز — أحد أحرفه الأصلية همزة`,
+  "مضعف":  (w) => `"${w.word}": فعل مضعف — حرفان أصليان متماثلان`,
+  "مثال":  (w) => `"${w.word}": فعل مثال — فاؤه حرف علة (واو أو ياء)`,
+  "أجوف":  (w) => `"${w.word}": فعل أجوف — عينه حرف علة في الوسط`,
+  "ناقص":  (w) => `"${w.word}": فعل ناقص — لامه حرف علة في الآخر`,
+  "صحيح":  (w) => `"${w.word}": فعل صحيح — خالٍ من حروف العلة`,
+  "معتل":  (w) => `"${w.word}": فعل معتل — يحتوي على حرف علة`,
+  "فعل":   (w) => `"${w.word}": فعل — يدلّ على حدث مرتبط بزمن`,
+};
+
+// SHORT labels for the bubble
+const MISSION_SHORT = {
+  "اصطد الأفعال فقط": "أفعال",
+  "اصطد الأسماء فقط": "أسماء",
+  "اصطد الأفعال الصحيحة": "فعل صحيح",
+  "اصطد الأفعال المعتلة": "فعل معتل",
+  "اصطد الصحيح السالم": "صحيح سالم",
+  "اصطد الصحيح المهموز": "صحيح مهموز",
+  "اصطد الصحيح المضعف": "صحيح مضعف",
+  "اصطد المعتل المثال": "معتل مثال",
+  "اصطد المعتل الأجوف": "معتل أجوف",
+  "اصطد المعتل الناقص": "معتل ناقص",
+};
+
+function getMissionShort(label) {
+  for (const [key, val] of Object.entries(MISSION_SHORT)) {
+    if (label.includes(key)) return val;
+  }
+  return label.replace(/🎯\s*/,'');
+}
+
+const LEVELS = {
+  1: {
+    duration: 40,
+    speedBase: { min:1.2, max:2.0 },
+    spawnRate: 2200,
+    maxWords: 4,
+    points: { correct:10, wrong:-5, missed:-3 },
+    catchToChangeMission: 2,  // change after 2 correct catches
+    missions: [
+      { label:"🎯 اصطد الأفعال فقط", check: w => w.type==="فعل" },
+      { label:"🎯 اصطد الأسماء فقط", check: w => w.type==="اسم" },
+    ]
+  },
+  2: {
+    duration: 50,
+    speedBase: { min:1.8, max:3.0 },
+    spawnRate: 1800,
+    maxWords: 6,
+    points: { correct:15, wrong:-10, missed:-5 },
+    catchToChangeMission: 3,
+    missions: [
+      { label:"🎯 اصطد الأفعال فقط",     check: w => w.type==="فعل" },
+      { label:"🎯 اصطد الأسماء فقط",     check: w => w.type==="اسم" },
+      { label:"🎯 اصطد الأفعال الصحيحة", check: w => w.category==="صحيح" },
+      { label:"🎯 اصطد الأفعال المعتلة", check: w => w.category==="معتل" },
+    ]
+  },
+  3: {
+    duration: 60,
+    speedBase: { min:2.5, max:4.0 },
+    spawnRate: 1300,
+    maxWords: 8,
+    points: { correct:20, wrong:-15, missed:-10 },
+    catchToChangeMission: 2,
+    missions: [
+      { label:"🎯 اصطد الأفعال المعتلة",    check: w => w.category==="معتل" },
+      { label:"🎯 اصطد الأفعال الصحيحة",    check: w => w.category==="صحيح" },
+      { label:"🎯 اصطد الصحيح السالم",      check: w => w.subCategory==="سالم" },
+      { label:"🎯 اصطد الصحيح المهموز",     check: w => w.subCategory==="مهموز" },
+      { label:"🎯 اصطد الصحيح المضعف",     check: w => w.subCategory==="مضعف" },
+      { label:"🎯 اصطد المعتل المثال",      check: w => w.subCategory==="مثال" },
+      { label:"🎯 اصطد المعتل الأجوف",     check: w => w.subCategory==="أجوف" },
+      { label:"🎯 اصطد المعتل الناقص",     check: w => w.subCategory==="ناقص" },
+    ]
+  }
+};
+
+const CAT_COLORS = {
+  "اسم":   { bg:"rgba(20,60,120,0.88)",  border:"#4488FF", text:"#AACCFF" },
+  "حرف":  { bg:"rgba(60,20,90,0.88)",   border:"#AA44FF", text:"#CC99FF" },
+  "سالم": { bg:"rgba(10,80,50,0.88)",   border:"#22CC88", text:"#88FFCC" },
+  "مهموز":{ bg:"rgba(80,60,10,0.88)",   border:"#FFAA22", text:"#FFD088" },
+  "مضعف": { bg:"rgba(90,30,10,0.88)",   border:"#FF6622", text:"#FFAA88" },
+  "مثال": { bg:"rgba(10,70,80,0.88)",   border:"#22CCDD", text:"#88EEFF" },
+  "أجوف": { bg:"rgba(80,20,60,0.88)",   border:"#FF44AA", text:"#FF99CC" },
+  "ناقص": { bg:"rgba(70,70,10,0.88)",   border:"#DDCC22", text:"#FFEE88" },
+};
+
+function getCatColor(w) {
+  if (w.type==="اسم") return CAT_COLORS["اسم"];
+  if (w.type==="حرف") return CAT_COLORS["حرف"];
+  return CAT_COLORS[w.subCategory] || { bg:"rgba(74,16,128,0.88)", border:"#9B4DCA", text:"#DDA0FF" };
+}
+
+// ═══════════════════════════════════════════════
+//  AUDIO
+// ═══════════════════════════════════════════════
+const Audio = (() => {
+  let ctx = null, muted = false, bgGain = null, bgStarted = false;
+  function init() {
+    if (ctx) { if (ctx.state==='suspended') ctx.resume(); return; }
+    ctx = new (window.AudioContext || window.webkitAudioContext)();
+  }
+  function tone(freq, type, dur, vol=0.3) {
+    if (muted || !ctx) return;
+    try {
+      const o=ctx.createOscillator(), g=ctx.createGain();
+      o.connect(g); g.connect(ctx.destination);
+      o.type=type; o.frequency.setValueAtTime(freq,ctx.currentTime);
+      g.gain.setValueAtTime(vol,ctx.currentTime);
+      g.gain.exponentialRampToValueAtTime(0.001,ctx.currentTime+dur);
+      o.start(); o.stop(ctx.currentTime+dur);
+    } catch(e){}
+  }
+  function startBg() {
+    if (bgStarted||muted||!ctx) return;
+    bgStarted=true; bgGain=ctx.createGain(); bgGain.gain.value=0.05; bgGain.connect(ctx.destination);
+    const notes=[261,294,329,349,392,440,392,349,329,294]; let i=0;
+    function playNote() {
+      if (!bgGain) return;
+      try { const o=ctx.createOscillator(); o.type='sine'; o.frequency.value=notes[i%notes.length]; o.connect(bgGain); o.start(); o.stop(ctx.currentTime+0.45); i++; } catch(e){}
+      setTimeout(playNote,500);
+    }
+    playNote();
+  }
+  function playCorrect() { tone(523,'sine',0.1,0.3); setTimeout(()=>tone(659,'sine',0.12,0.3),60); setTimeout(()=>tone(784,'sine',0.2,0.25),130); }
+  function playWrong()   { tone(220,'sawtooth',0.25,0.4); setTimeout(()=>tone(180,'sawtooth',0.2,0.2),100); }
+  function playCombo()   { [523,659,784,1047].forEach((f,i)=>setTimeout(()=>tone(f,'triangle',0.15,0.25),i*50)); }
+  function playMissed()  { tone(350,'triangle',0.3,0.2); }
+  function playMission() { [440,550,660].forEach((f,i)=>setTimeout(()=>tone(f,'sine',0.2,0.2),i*80)); }
+  function playLevelEnd(){ [523,587,659,698,784,880,988,1047].forEach((f,i)=>setTimeout(()=>tone(f,'sine',0.25,0.2),i*70)); }
+  function toggleMute() {
+    muted=!muted; if(bgGain) bgGain.gain.value=muted?0:0.05;
+    document.getElementById('soundToggle').textContent=muted?'🔇':'🔊';
+  }
+  return { init, startBg, playCorrect, playWrong, playCombo, playMissed, playMission, playLevelEnd, toggleMute };
+})();
+
+// ═══════════════════════════════════════════════
+//  PARTICLES
+// ═══════════════════════════════════════════════
+class ParticleSystem {
+  constructor() { this.particles = []; }
+  emit(x, y, color, count=12) {
+    for (let i=0; i<count; i++) {
+      const angle=(Math.PI*2/count)*i+Math.random()*0.5, speed=2+Math.random()*4;
+      this.particles.push({x,y,vx:Math.cos(angle)*speed,vy:Math.sin(angle)*speed-2,life:1,decay:0.022+Math.random()*0.018,size:3+Math.random()*5,color});
+    }
+  }
+  emitText(x, y, text, color) {
+    this.particles.push({x,y,text,color,vx:(Math.random()-0.5),vy:-2.5,life:1,decay:0.02,type:'text',size:18});
+  }
+  update() {
+    this.particles=this.particles.filter(p=>{p.x+=p.vx;p.y+=p.vy;p.vy+=0.1;p.life-=p.decay;return p.life>0;});
+  }
+  draw(ctx) {
+    this.particles.forEach(p=>{
+      ctx.save(); ctx.globalAlpha=p.life;
+      if (p.type==='text') {
+        ctx.font=`bold ${p.size}px Tajawal`; ctx.fillStyle=p.color; ctx.textAlign='center'; ctx.fillText(p.text,p.x,p.y);
+      } else {
+        ctx.fillStyle=p.color; ctx.shadowBlur=8; ctx.shadowColor=p.color;
+        ctx.beginPath(); ctx.arc(p.x,p.y,p.size*p.life,0,Math.PI*2); ctx.fill();
+      }
+      ctx.restore();
+    });
+  }
+}
+
+// ═══════════════════════════════════════════════
+//  PLAYER
+// ═══════════════════════════════════════════════
+class Player {
+  constructor(cW, cH) {
+    this.cW=cW; this.cH=cH;
+    this.x=cW/2; this.y=cH-80;
+    this.w=60; this.h=80;
+    this.vx=0; this.speed=5.5; this.friction=0.8;
+    this.state='idle'; this.stateTimer=0;
+    this.bobTime=0; this.bobOffset=0;
+    this.glowColor=null; this.shakeX=0;
+    this.trail=[];
+    // Movement animation
+    this.moveDir=0;     // -1 left, 0 none, 1 right
+    this.leanAngle=0;   // body lean
+    this.scarfWave=0;   // scarf/tail wave
+    this.dustTimer=0;
+    this.dustParticles=[];
+  }
+  update(keys) {
+    const prevVx=this.vx;
+    if (keys.left)  this.vx-=0.9;
+    if (keys.right) this.vx+=0.9;
+    this.vx*=this.friction;
+    this.x+=this.vx;
+    this.x=Math.max(this.w/2,Math.min(this.cW-this.w/2,this.x));
+    this.bobTime+=0.05;
+    this.bobOffset=Math.sin(this.bobTime)*4;
+    if (this.stateTimer>0){this.stateTimer--;if(this.stateTimer<=0)this.state='idle';}
+    if (Math.abs(this.vx)>0.5) this.state='move';
+    else if (this.stateTimer<=0) this.state='idle';
+    this.shakeX*=0.85;
+
+    // Movement direction & lean
+    this.moveDir = Math.abs(this.vx)>0.4 ? Math.sign(this.vx) : 0;
+    const targetLean = this.moveDir * 0.22;
+    this.leanAngle += (targetLean - this.leanAngle) * 0.18;
+    this.scarfWave += 0.12;
+
+    // Trail
+    this.trail.push({x:this.x,y:this.y+this.bobOffset,life:1,vx:this.vx});
+    if(this.trail.length>10) this.trail.shift();
+    this.trail.forEach(t=>t.life-=0.1);
+
+    // Dust particles when moving fast
+    if (Math.abs(this.vx)>2) {
+      this.dustTimer--;
+      if (this.dustTimer<=0) {
+        this.dustTimer=4;
+        this.dustParticles.push({
+          x:this.x-this.vx*5,y:this.y+35,
+          vx:(Math.random()-0.5)*1.5,vy:-0.5-Math.random()*0.8,
+          life:1,size:4+Math.random()*6
+        });
+      }
+    }
+    this.dustParticles=this.dustParticles.filter(d=>{
+      d.x+=d.vx; d.y+=d.vy; d.life-=0.06; return d.life>0;
+    });
+  }
+  catchAnim(success) {
+    this.state=success?'catch':'wrong';
+    this.stateTimer=success?40:30;
+    this.glowColor=success?'#44FF88':'#FF4444';
+    if(!success) this.shakeX=10;
+  }
+  draw(ctx) {
+    const px=this.x+this.shakeX*(Math.random()-0.5)*2;
+    const py=this.y+this.bobOffset;
+
+    // Dust
+    this.dustParticles.forEach(d=>{
+      ctx.save(); ctx.globalAlpha=d.life*0.5; ctx.fillStyle='rgba(155,77,202,0.6)';
+      ctx.beginPath(); ctx.arc(d.x,d.y,d.size*d.life,0,Math.PI*2); ctx.fill(); ctx.restore();
+    });
+
+    // Speed trail (ghost copies when moving fast)
+    if (Math.abs(this.vx)>2.5) {
+      for (let i=0;i<Math.min(3,this.trail.length);i++) {
+        const t=this.trail[i];
+        ctx.save(); ctx.globalAlpha=t.life*0.12;
+        ctx.translate(t.x,t.y+30); ctx.scale(1,0.9);
+        ctx.fillStyle='#9B4DCA';
+        ctx.beginPath(); ctx.ellipse(0,0,20,30,0,0,Math.PI*2); ctx.fill();
+        ctx.restore();
+      }
+    }
+
+    // Normal aura trail
+    this.trail.forEach((t,i)=>{
+      ctx.save(); ctx.globalAlpha=t.life*0.1; ctx.fillStyle='#9B4DCA';
+      const s=(i/this.trail.length)*18+4;
+      ctx.beginPath(); ctx.arc(t.x,t.y+30,s,0,Math.PI*2); ctx.fill(); ctx.restore();
+    });
+
+    // Glow
+    if (this.glowColor&&this.stateTimer>0){
+      ctx.save(); ctx.globalAlpha=this.stateTimer/40*0.6; ctx.shadowBlur=40; ctx.shadowColor=this.glowColor;
+      ctx.fillStyle=this.glowColor; ctx.beginPath(); ctx.arc(px,py+10,40,0,Math.PI*2); ctx.fill(); ctx.restore();
+    }
+
+    // Draw genie with lean transform
+    ctx.save();
+    ctx.translate(px, py);
+    ctx.rotate(this.leanAngle);
+    ctx.translate(-px, -py);
+    this._drawGenie(ctx, px, py);
+    ctx.restore();
+
+    // Speed lines (when moving fast)
+    if (Math.abs(this.vx)>3) {
+      ctx.save();
+      ctx.strokeStyle='rgba(155,77,202,0.35)';
+      ctx.lineWidth=1.5;
+      for(let i=0;i<3;i++){
+        const sy=py-20+i*15;
+        const len=(Math.abs(this.vx)-3)*8;
+        const dir=Math.sign(this.vx)*-1;
+        ctx.beginPath();
+        ctx.moveTo(px,sy);
+        ctx.lineTo(px+dir*len*(0.6+i*0.3),sy);
+        ctx.stroke();
+      }
+      ctx.restore();
+    }
+  }
+  _drawGenie(ctx, px, py) {
+    const scarfBend = Math.sin(this.scarfWave)*8 * (this.moveDir===0?1:this.moveDir*-1);
+    // Tail with wave when moving
+    const tg=ctx.createLinearGradient(px,py+20,px,py+70);
+    tg.addColorStop(0,'rgba(155,77,202,0.8)'); tg.addColorStop(1,'rgba(155,77,202,0)');
+    ctx.save(); ctx.fillStyle=tg; ctx.beginPath();
+    ctx.moveTo(px-20,py+20);
+    const swayAmt = this.moveDir!==0 ? this.moveDir*-12 : Math.sin(this.bobTime*2)*8;
+    ctx.quadraticCurveTo(px+swayAmt,py+45,px,py+70);
+    ctx.quadraticCurveTo(px-swayAmt*0.7,py+55,px+20,py+20);
+    ctx.closePath(); ctx.fill(); ctx.restore();
+    // Body
+    ctx.save(); const bg2=ctx.createRadialGradient(px,py,5,px,py+5,28);
+    bg2.addColorStop(0,'#C060FF'); bg2.addColorStop(1,'#6A0DAD');
+    ctx.fillStyle=bg2; ctx.shadowBlur=15; ctx.shadowColor='#9B4DCA';
+    ctx.beginPath(); ctx.ellipse(px,py+5,22,28,0,0,Math.PI*2); ctx.fill(); ctx.restore();
+    // Belt
+    ctx.save(); ctx.fillStyle=this.state==='catch'?'#FFD700':'#C9A227';
+    ctx.fillRect(px-22,py+8,44,6); ctx.fillStyle='#FFD700';
+    ctx.beginPath(); ctx.arc(px,py+11,5,0,Math.PI*2); ctx.fill(); ctx.restore();
+    // Collar
+    ctx.save(); ctx.fillStyle='#FFD700'; ctx.beginPath(); ctx.arc(px,py-18,14,Math.PI,Math.PI*2); ctx.fill(); ctx.restore();
+    // Head
+    ctx.save(); const hg=ctx.createRadialGradient(px-4,py-32,2,px,py-25,18);
+    hg.addColorStop(0,'#FFD5A0'); hg.addColorStop(1,'#E8A060');
+    ctx.fillStyle=hg; ctx.shadowBlur=10; ctx.shadowColor='rgba(255,180,100,0.4)';
+    ctx.beginPath(); ctx.arc(px,py-25,16,0,Math.PI*2); ctx.fill(); ctx.restore();
+    // Eyes
+    const ey=py-27;
+    if (this.state==='wrong'){
+      [-6,6].forEach(ox=>{ctx.save();ctx.strokeStyle='#FF2222';ctx.lineWidth=2;ctx.beginPath();ctx.moveTo(px+ox-3,ey-3);ctx.lineTo(px+ox+3,ey+3);ctx.moveTo(px+ox+3,ey-3);ctx.lineTo(px+ox-3,ey+3);ctx.stroke();ctx.restore();});
+    } else if (this.state==='catch'){
+      [-6,6].forEach(ox=>{ctx.save();ctx.fillStyle='#FFD700';ctx.font='10px serif';ctx.textAlign='center';ctx.fillText('★',px+ox,ey+3);ctx.restore();});
+    } else {
+      // Blinking eyes while moving
+      const eyeH = this.moveDir!==0 ? 2.5 : 4;
+      [-6,6].forEach(ox=>{ctx.save();ctx.fillStyle='#1A0040';ctx.beginPath();ctx.ellipse(px+ox,ey,3.5,eyeH,0,0,Math.PI*2);ctx.fill();ctx.fillStyle='#FFFFFF';ctx.beginPath();ctx.arc(px+ox+1,ey-1,1.2,0,Math.PI*2);ctx.fill();ctx.restore();});
+    }
+    // Mouth
+    ctx.save(); ctx.strokeStyle='#7A3A10'; ctx.lineWidth=1.5; ctx.beginPath();
+    if (this.state==='wrong'){ctx.arc(px,py-14,5,0,Math.PI);ctx.stroke();}
+    else if (this.state==='catch'){ctx.arc(px,py-17,5,0,Math.PI,false);ctx.stroke();}
+    else if (this.moveDir!==0){ctx.arc(px,py-17,3,0,Math.PI,false);ctx.stroke();} // determined face
+    else{ctx.arc(px,py-17,4,0,Math.PI,false);ctx.stroke();}
+    ctx.restore();
+    // Turban
+    ctx.save(); ctx.fillStyle='#4A1080'; ctx.beginPath(); ctx.arc(px,py-36,14,Math.PI,Math.PI*2); ctx.fill();
+    ctx.fillStyle='#7B2FBE'; ctx.beginPath(); ctx.arc(px,py-36,14,-0.3,Math.PI+0.3); ctx.fill();
+    ctx.fillStyle='#00CED1'; ctx.shadowBlur=8; ctx.shadowColor='#00CED1';
+    ctx.beginPath(); ctx.arc(px,py-42,4,0,Math.PI*2); ctx.fill();
+    // Feather waves when moving
+    const featherSway = this.moveDir!==0 ? Math.sin(this.scarfWave)*6 : Math.sin(this.bobTime)*3;
+    ctx.strokeStyle='#FFD700'; ctx.lineWidth=1.5; ctx.beginPath();
+    ctx.moveTo(px+2,py-42); ctx.quadraticCurveTo(px+12+featherSway,py-60,px+8+featherSway,py-55); ctx.stroke();
+    ctx.restore();
+    // Arms - pump when running
+    const armSwing = this.moveDir!==0 ? Math.sin(this.scarfWave*1.5)*12 : Math.cos(this.bobTime+1)*5;
+    const armSwing2 = this.moveDir!==0 ? -Math.sin(this.scarfWave*1.5)*12 : Math.cos(this.bobTime+2)*5;
+    ctx.save(); ctx.strokeStyle='#E8A060'; ctx.lineWidth=6; ctx.lineCap='round';
+    ctx.beginPath(); ctx.moveTo(px-18,py-5); ctx.quadraticCurveTo(px-32,py+8,px-28+armSwing,py-10); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(px+18,py-5); ctx.quadraticCurveTo(px+32,py+8,px+28+armSwing2,py-10); ctx.stroke();
+    ctx.restore();
+    if (this.state==='catch'){
+      ctx.save(); ctx.shadowBlur=20; ctx.shadowColor='#44FF88'; ctx.fillStyle='rgba(68,255,136,0.3)';
+      ctx.beginPath(); ctx.arc(px-28+armSwing,py-10,8,0,Math.PI*2); ctx.arc(px+28+armSwing2,py-10,8,0,Math.PI*2); ctx.fill(); ctx.restore();
+    }
+    // Scarf/cape behind when moving fast
+    if (Math.abs(this.vx)>2) {
+      ctx.save(); ctx.globalAlpha=0.5;
+      const scarfG=ctx.createLinearGradient(px,py-10,px+scarfBend*2,py+20);
+      scarfG.addColorStop(0,'rgba(0,206,209,0.6)'); scarfG.addColorStop(1,'transparent');
+      ctx.fillStyle=scarfG; ctx.beginPath();
+      ctx.moveTo(px-5,py-18);
+      ctx.quadraticCurveTo(px+scarfBend,py,px+scarfBend*1.5,py+25);
+      ctx.quadraticCurveTo(px+scarfBend*0.5,py+15,px+5,py-18);
+      ctx.closePath(); ctx.fill(); ctx.restore();
+    }
+  }
+  get catchZone() { return {x:this.x-30,y:this.y-25,w:60,h:40}; }
+}
+
+// ═══════════════════════════════════════════════
+//  FALLING WORD
+// ═══════════════════════════════════════════════
+class FallingWord {
+  constructor(data, canvasW, speed) {
+    this.data=data;
+    this.w=90+data.word.length*8; this.h=44;
+    this.x=this.w/2+10+Math.random()*(canvasW-this.w-20);
+    this.y=-this.h; this.vy=speed;
+    this.rotation=(Math.random()-0.5)*0.07;
+    this.alpha=1; this.hoverPhase=Math.random()*Math.PI*2;
+    this.removing=false; this.removeVy=0;
+    this.cols=getCatColor(data);
+  }
+  update() {
+    if(this.removing){this.removeVy-=0.5;this.y+=this.removeVy;this.alpha-=0.06;return;}
+    this.y+=this.vy; this.hoverPhase+=0.03;
+  }
+  draw(ctx) {
+    if(this.alpha<=0) return;
+    ctx.save(); ctx.globalAlpha=this.alpha;
+    ctx.translate(this.x,this.y+Math.sin(this.hoverPhase)*2); ctx.rotate(this.rotation);
+    ctx.shadowBlur=14+Math.sin(this.hoverPhase)*4; ctx.shadowColor=this.cols.border;
+    const r=this.h/2;
+    ctx.beginPath(); ctx.roundRect(-this.w/2,-this.h/2,this.w,this.h,r);
+    ctx.fillStyle=this.cols.bg; ctx.fill();
+    ctx.strokeStyle=this.cols.border; ctx.lineWidth=1.8; ctx.stroke();
+    const sg=ctx.createLinearGradient(-this.w/2,-this.h/2,this.w/2,this.h/2);
+    sg.addColorStop(0,'rgba(255,255,255,0.12)'); sg.addColorStop(1,'rgba(255,255,255,0)');
+    ctx.fillStyle=sg; ctx.fill();
+    ctx.shadowBlur=8; ctx.shadowColor=this.cols.text; ctx.fillStyle=this.cols.text;
+    ctx.font='bold 18px Amiri'; ctx.textAlign='center'; ctx.textBaseline='middle';
+    ctx.fillText(this.data.word,0,1);
+    ctx.restore();
+  }
+  isOffScreen(H){return this.y>H+this.h;}
+  get done(){return this.alpha<=0;}
+}
+
+// ═══════════════════════════════════════════════
+//  BACKGROUND
+// ═══════════════════════════════════════════════
+class BackgroundRenderer {
+  constructor(canvas) {
+    this.canvas=canvas; this.ctx=canvas.getContext('2d'); this.resize();
+    this.stars=Array.from({length:100},()=>({x:Math.random()*this.W,y:Math.random()*this.H,r:Math.random()*1.5+0.3,blink:Math.random()*Math.PI*2,speed:0.01+Math.random()*0.02}));
+    this.letters=Array.from({length:14},()=>({char:'ع ر ب ي ة ف ع ل ا س م ح'.split(' ')[Math.floor(Math.random()*12)],x:Math.random()*this.W,y:Math.random()*this.H,size:30+Math.random()*50,alpha:0.03+Math.random()*0.05,drift:(Math.random()-0.5)*0.3,vy:-0.2-Math.random()*0.3}));
+    this.lanterns=Array.from({length:6},()=>({x:Math.random()*this.W,y:Math.random()*this.H*0.7,sway:Math.random()*Math.PI*2,size:8+Math.random()*6}));
+    this.t=0;
+  }
+  resize(){this.W=this.canvas.width;this.H=this.canvas.height;}
+  draw() {
+    const ctx=this.ctx; this.t++;
+    const bg=ctx.createLinearGradient(0,0,0,this.H);
+    bg.addColorStop(0,'#030012'); bg.addColorStop(0.4,'#0A0318'); bg.addColorStop(1,'#130530');
+    ctx.fillStyle=bg; ctx.fillRect(0,0,this.W,this.H);
+    const ag=ctx.createRadialGradient(this.W/2,this.H*0.3,20,this.W/2,this.H*0.3,this.W*0.7);
+    ag.addColorStop(0,'rgba(123,47,190,0.06)'); ag.addColorStop(1,'transparent');
+    ctx.fillStyle=ag; ctx.fillRect(0,0,this.W,this.H);
+    this.stars.forEach(s=>{s.blink+=s.speed;const a=0.4+Math.sin(s.blink)*0.4;ctx.save();ctx.globalAlpha=a;ctx.fillStyle='#FFFFFF';ctx.beginPath();ctx.arc(s.x,s.y,s.r,0,Math.PI*2);ctx.fill();ctx.restore();});
+    this.letters.forEach(l=>{l.x+=l.drift;l.y+=l.vy;if(l.y<-60){l.y=this.H+10;l.x=Math.random()*this.W;}ctx.save();ctx.globalAlpha=l.alpha;ctx.fillStyle='#9B4DCA';ctx.font=`${l.size}px Amiri`;ctx.textAlign='center';ctx.fillText(l.char,l.x,l.y);ctx.restore();});
+    this.lanterns.forEach(l=>{l.sway+=0.01;const sx=l.x+Math.sin(l.sway)*8;ctx.save();ctx.globalAlpha=0.5;const lg=ctx.createRadialGradient(sx,l.y,0,sx,l.y,l.size*3);lg.addColorStop(0,'rgba(255,200,50,0.3)');lg.addColorStop(1,'transparent');ctx.fillStyle=lg;ctx.beginPath();ctx.arc(sx,l.y,l.size*3,0,Math.PI*2);ctx.fill();ctx.fillStyle='#C9A227';ctx.beginPath();ctx.roundRect(sx-l.size/2,l.y-l.size,l.size,l.size*2,3);ctx.fill();ctx.fillStyle='rgba(255,200,50,0.4)';ctx.fillRect(sx-l.size/2+2,l.y-l.size+3,l.size-4,l.size*2-6);ctx.restore();});
+    const fg=ctx.createLinearGradient(0,this.H-80,0,this.H);
+    fg.addColorStop(0,'transparent'); fg.addColorStop(1,'rgba(74,16,128,0.3)');
+    ctx.fillStyle=fg; ctx.fillRect(0,this.H-80,this.W,80);
+    ctx.strokeStyle='rgba(155,77,202,0.4)'; ctx.lineWidth=1.5; ctx.setLineDash([8,6]);
+    ctx.beginPath(); ctx.moveTo(0,this.H-45); ctx.lineTo(this.W,this.H-45); ctx.stroke(); ctx.setLineDash([]);
+  }
+}
+
+// ═══════════════════════════════════════════════
+//  GAME STATE
+// ═══════════════════════════════════════════════
+const bgCanvas=document.getElementById('bgCanvas');
+const gameCanvas=document.getElementById('gameCanvas');
+const ctx=gameCanvas.getContext('2d');
+
+let W,H;
+let bg,player,particles;
+let words=[];
+let currentLevel=1;
+let levelCfg,missions,missionIdx,currentMission;
+let gameState='start';
+let score,combo,bestCombo,mistakes,correct,wrong,missed;
+let timeLeft,totalTime;
+let spawnTimer;
+let raf,lastTs;
+let shake=0;
+let correctInMission=0;   // track correct catches in current mission
+let isMissionFrozen=false; // game frozen during mission bubble
+let missionBubbleTimeout=null;
+
+const keys={left:false,right:false};
+const hs={1:0,2:0,3:0};
+try{[1,2,3].forEach(l=>{const v=localStorage.getItem(`arabicGame_hs_${l}`);if(v)hs[l]=+v;});}catch(e){}
+
+function resize() {
+  W=window.innerWidth; H=window.innerHeight;
+  bgCanvas.width=gameCanvas.width=W;
+  bgCanvas.height=gameCanvas.height=H;
+  if(bg)bg.resize();
+  if(player){player.cW=W;player.cH=H;player.y=H-80;}
+}
+window.addEventListener('resize',()=>resize());
+window.addEventListener('orientationchange',()=>setTimeout(resize,200));
+
+// Speed scaling: normalize to a 390x844 reference screen
+function getSpeedScale() {
+  const refH=844;
+  // taller screens → words fall more distance → need more speed to maintain challenge
+  return Math.sqrt(H/refH);
+}
+
+// ── KEYBOARD ──
+window.addEventListener('keydown',e=>{
+  if(e.key==='ArrowLeft'||e.key==='a') keys.left=true;
+  if(e.key==='ArrowRight'||e.key==='d') keys.right=true;
+  if(e.key==='Escape'||e.key==='p'){if(gameState==='playing'||gameState==='paused')togglePause();}
+});
+window.addEventListener('keyup',e=>{
+  if(e.key==='ArrowLeft'||e.key==='a') keys.left=false;
+  if(e.key==='ArrowRight'||e.key==='d') keys.right=false;
+});
+
+// ── TOUCH ──
+let touchStartX=null,lastTouchX=null;
+gameCanvas.addEventListener('touchstart',e=>{
+  e.preventDefault();
+  Audio.init(); Audio.startBg();
+  touchStartX=e.touches[0].clientX; lastTouchX=touchStartX;
+  keys.left=false; keys.right=false;
+},{passive:false});
+gameCanvas.addEventListener('touchmove',e=>{
+  e.preventDefault();
+  if(touchStartX===null) return;
+  const tx=e.touches[0].clientX;
+  const dx=tx-(lastTouchX||touchStartX);
+  lastTouchX=tx;
+  if(player){player.vx+=dx*0.4;player.vx=Math.max(-12,Math.min(12,player.vx));}
+},{passive:false});
+gameCanvas.addEventListener('touchend',e=>{
+  e.preventDefault();
+  touchStartX=null;lastTouchX=null;
+  keys.left=false;keys.right=false;
+},{passive:false});
+gameCanvas.addEventListener('click',()=>{Audio.init();Audio.startBg();},{once:true});
+
+// ── SCREENS ──
+function showStartScreen() {
+  document.getElementById('startScreen').classList.remove('hidden');
+  document.getElementById('endScreen').classList.add('hidden');
+  document.getElementById('pauseMenu').classList.add('hidden');
+  const hsText=[1,2,3].map(l=>`M${l}: ${hs[l]}`).join('  |  ');
+  document.getElementById('highScoreDisplay').textContent=`🏆 أفضل النتائج: ${hsText}`;
+}
+
+function goHome() {
+  cancelAnimationFrame(raf); gameState='start';
+  keys.left=false; keys.right=false;
+  isMissionFrozen=false;
+  clearTimeout(missionBubbleTimeout);
+  document.getElementById('startScreen').classList.remove('hidden');
+  document.getElementById('endScreen').classList.add('hidden');
+  document.getElementById('pauseMenu').classList.add('hidden');
+  document.getElementById('missionBubble').classList.remove('show');
+  const hsText=[1,2,3].map(l=>`M${l}: ${hs[l]}`).join('  |  ');
+  document.getElementById('highScoreDisplay').textContent=`🏆 أفضل النتائج: ${hsText}`;
+  if(!bg){resize();bg=new BackgroundRenderer(bgCanvas);}
+  bgLoop();
+}
+window.goHome=goHome;
+
+function bgLoop() {
+  if(gameState!=='start') return;
+  bg.draw(); raf=requestAnimationFrame(bgLoop);
+}
+
+function startLevel(lvl) {
+  Audio.init(); Audio.startBg();
+  currentLevel=lvl;
+  levelCfg=LEVELS[lvl];
+  missions=[...levelCfg.missions];
+  missionIdx=0;
+  currentMission=missions[0];
+  correctInMission=0;
+  isMissionFrozen=false;
+
+  score=0;combo=0;bestCombo=0;
+  mistakes=0;correct=0;wrong=0;missed=0;
+  timeLeft=levelCfg.duration;
+  totalTime=levelCfg.duration;
+  words=[]; spawnTimer=0; shake=0;
+
+  resize();
+  bg=new BackgroundRenderer(bgCanvas);
+  player=new Player(W,H);
+  particles=new ParticleSystem();
+
+  document.getElementById('startScreen').classList.add('hidden');
+  document.getElementById('endScreen').classList.add('hidden');
+  document.getElementById('pauseMenu').classList.add('hidden');
+  document.getElementById('missionBubble').classList.remove('show');
+  document.getElementById('swipeHint').style.opacity='1';
+
+  document.getElementById('missionBar').textContent=currentMission.label;
+  updateHUD();
+
+  gameState='playing';
+  lastTs=performance.now();
+  cancelAnimationFrame(raf);
+  raf=requestAnimationFrame(gameLoop);
+
+  setTimeout(()=>{
+    const hint=document.getElementById('swipeHint');
+    if(hint) hint.style.opacity='0';
+  },3000);
+}
+window.startLevel=startLevel;
+
+function retryLevel(){startLevel(currentLevel);}
+window.retryLevel=retryLevel;
+
+function togglePause() {
+  if(gameState==='playing'){
+    gameState='paused';
+    document.getElementById('pauseMenu').classList.remove('hidden');
+  } else if(gameState==='paused'){
+    gameState='playing';
+    document.getElementById('pauseMenu').classList.add('hidden');
+    lastTs=performance.now();
+    raf=requestAnimationFrame(gameLoop);
+  }
+}
+window.togglePause=togglePause;
+function toggleSound(){Audio.toggleMute();}
+window.toggleSound=toggleSound;
+
+// ── MISSION BUBBLE (1 second, freeze game) ──
+function showMissionBubble(label) {
+  const short=getMissionShort(label);
+  document.getElementById('missionBubbleText').textContent=short;
+  const bubble=document.getElementById('missionBubble');
+  bubble.classList.add('show');
+  Audio.playMission();
+  isMissionFrozen=true;
+  clearTimeout(missionBubbleTimeout);
+  missionBubbleTimeout=setTimeout(()=>{
+    bubble.classList.remove('show');
+    isMissionFrozen=false;
+    // Resume loop after unfreeze
+    if(gameState==='playing'){
+      lastTs=performance.now();
+      raf=requestAnimationFrame(gameLoop);
+    }
+  },1000);
+}
+
+// ── GAME LOOP ──
+function gameLoop(ts) {
+  if(gameState!=='playing') return;
+  if(isMissionFrozen) return; // freeze — loop will restart after bubble
+  const dt=Math.min(ts-lastTs,50); lastTs=ts;
+
+  timeLeft-=dt/1000;
+  if(timeLeft<=0){timeLeft=0;endLevel();return;}
+
+  // Check if we need to advance mission (after N correct catches)
+  // (handled in handleCatch)
+
+  // Spawn
+  spawnTimer-=dt;
+  if(spawnTimer<=0&&words.length<levelCfg.maxWords){
+    spawnWord(); spawnTimer=levelCfg.spawnRate*(0.8+Math.random()*0.4);
+  }
+
+  player.update(keys);
+  words.forEach(w=>w.update());
+  particles.update();
+  checkCollisions();
+
+  // Missed words
+  words=words.filter(w=>{
+    if(!w.removing&&w.isOffScreen(H)){
+      if(currentMission.check(w.data)){
+        missed++;mistakes++;
+        score+=levelCfg.points.missed;
+        combo=0;
+        Audio.playMissed();
+        particles.emitText(w.x,H-30,'⚠️','#FFAA44');
+        showEducPopup(w.data);
+      }
+      return false;
+    }
+    return !w.done;
+  });
+
+  // Draw
+  bg.draw();
+  ctx.clearRect(0,0,W,H);
+  if(shake>0){ctx.save();ctx.translate((Math.random()-0.5)*shake,(Math.random()-0.5)*shake);shake*=0.7;}
+  words.forEach(w=>w.draw(ctx));
+  particles.draw(ctx);
+  player.draw(ctx);
+  if(shake>0) ctx.restore();
+
+  updateHUD();
+  raf=requestAnimationFrame(gameLoop);
+}
+
+function spawnWord() {
+  const data=WORD_DB[Math.floor(Math.random()*WORD_DB.length)];
+  const scale=getSpeedScale();
+  const s=levelCfg.speedBase;
+  const speed=(s.min+(Math.random()*(s.max-s.min)))*scale;
+  words.push(new FallingWord(data,W,speed));
+}
+
+function checkCollisions() {
+  const zone=player.catchZone;
+  words.forEach(w=>{
+    if(w.removing) return;
+    if(Math.abs(w.x-(zone.x+zone.w/2))<(w.w/2+zone.w/2)&&
+       Math.abs(w.y-(zone.y+zone.h/2))<(w.h/2+zone.h/2)){
+      handleCatch(w);
+    }
+  });
+}
+
+function handleCatch(fw) {
+  fw.removing=true; fw.removeVy=-5;
+  const isCorrect=currentMission.check(fw.data);
+  if(isCorrect){
+    correct++;combo++;correctInMission++;
+    if(combo>bestCombo) bestCombo=combo;
+    let mul=combo>=10?3:combo>=5?2:combo>=3?1.5:1;
+    const pts=Math.floor(levelCfg.points.correct*mul);
+    score+=pts;
+    Audio.playCorrect();
+    if(combo>=3) Audio.playCombo();
+    player.catchAnim(true);
+    particles.emit(fw.x,fw.y,'#44FF88',16);
+    particles.emitText(fw.x,fw.y-20,`+${pts}`,'#44FF88');
+    if(combo>=3) particles.emitText(fw.x,fw.y-44,`×${mul.toFixed(1)} 🔥`,'#FFD700');
+    showCombo();
+
+    // Advance mission after catchToChangeMission correct catches
+    const needed=levelCfg.catchToChangeMission;
+    if(correctInMission>=needed && missions.length>1){
+      correctInMission=0;
+      missionIdx=(missionIdx+1)%missions.length;
+      currentMission=missions[missionIdx];
+      document.getElementById('missionBar').textContent=currentMission.label;
+      // Show bubble and freeze
+      showMissionBubble(currentMission.label);
+      // Cancel current loop frame since we're freezing
+      cancelAnimationFrame(raf);
+    }
+  } else {
+    wrong++;mistakes++;combo=0;
+    score+=levelCfg.points.wrong;
+    Audio.playWrong();
+    player.catchAnim(false);
+    shake=8;
+    particles.emit(fw.x,fw.y,'#FF4444',10);
+    particles.emitText(fw.x,fw.y-20,`${levelCfg.points.wrong}`,'#FF4444');
+    showEducPopup(fw.data);
+  }
+}
+
+function showCombo(){
+  const el=document.getElementById('comboText');
+  let mul=combo>=10?3:combo>=5?2:combo>=3?1.5:1;
+  el.textContent=combo>=3?`🔥 ×${mul.toFixed(1)} تسلسل ${combo}`:'';
+  el.classList.toggle('show',combo>=3);
+}
+
+let educTimer;
+function showEducPopup(wordData){
+  const popup=document.getElementById('educPopup');
+  const fn=EXPLAIN[wordData.subCategory]||EXPLAIN[wordData.category]||EXPLAIN[wordData.type];
+  popup.textContent=fn?fn(wordData):`"${wordData.word}": ${wordData.type}`;
+  popup.classList.add('show');
+  clearTimeout(educTimer);
+  educTimer=setTimeout(()=>popup.classList.remove('show'),3000);
+}
+
+function updateHUD(){
+  document.getElementById('scoreVal').textContent=Math.max(0,score);
+  document.getElementById('timerVal').textContent=Math.ceil(timeLeft);
+  document.getElementById('mistakesVal').textContent=mistakes;
+  const acc=(correct+wrong)>0?Math.round(correct/(correct+wrong)*100):100;
+  document.getElementById('accuracyVal').textContent=acc+'%';
+  let mul=combo>=10?3:combo>=5?2:combo>=3?1.5:1;
+  document.getElementById('comboVal').textContent=`×${mul.toFixed(combo>=3?1:0)}`;
+  const pct=(timeLeft/totalTime)*100;
+  const fill=document.getElementById('timerFill');
+  fill.style.width=pct+'%';
+  if(pct<20) fill.style.background='linear-gradient(to left,#FF4444,#FF8800)';
+  else if(pct<50) fill.style.background='linear-gradient(to left,#FFAA22,#FFDD44)';
+  else fill.style.background='linear-gradient(to left,#00CED1,#9B4DCA)';
+}
+
+function endLevel(){
+  gameState='end'; Audio.playLevelEnd();
+  cancelAnimationFrame(raf);
+  clearTimeout(missionBubbleTimeout);
+  document.getElementById('missionBubble').classList.remove('show');
+  const acc=(correct+wrong)>0?Math.round(correct/(correct+wrong)*100):100;
+  const finalScore=Math.max(0,score);
+  if(finalScore>hs[currentLevel]){hs[currentLevel]=finalScore;try{localStorage.setItem(`arabicGame_hs_${currentLevel}`,finalScore);}catch(e){}}
+  const stars=acc>=90?'⭐⭐⭐':acc>=70?'⭐⭐':'⭐';
+  const title=acc>=90?'🏆 ممتاز!':acc>=70?'👏 أحسنت!':'💪 حاول مجدداً!';
+  document.getElementById('endTitle').textContent=title;
+  document.getElementById('starsDisplay').textContent=stars;
+  document.getElementById('resFinalScore').textContent=finalScore;
+  document.getElementById('resAccuracy').textContent=acc+'%';
+  document.getElementById('resCorrect').textContent=correct;
+  document.getElementById('resWrong').textContent=wrong;
+  document.getElementById('resMissed').textContent=missed;
+  document.getElementById('resBestCombo').textContent=bestCombo;
+  let analysis='';
+  if(acc>=90) analysis='🌟 رائع! أتقنت تصنيف الكلمات بمهارة عالية!';
+  else if(wrong>correct) analysis='📚 راجع تصنيف الأفعال الصحيحة والمعتلة — ستتحسن بالتدريب!';
+  else if(missed>correct) analysis='⚡ حاول التحرك أسرع لاصطياد الكلمات الصحيحة!';
+  else analysis=`👍 أداء جيد! الدقة ${acc}% — استمر في التحسن!`;
+  document.getElementById('analysisText').textContent=analysis;
+  document.getElementById('endScreen').classList.remove('hidden');
+}
+
+// ── INIT ──
+resize();
+bg=new BackgroundRenderer(bgCanvas);
+showStartScreen();
+bgLoop();
+</script>
+
+</body>
+</html>
