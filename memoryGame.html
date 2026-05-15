@@ -1,0 +1,1270 @@
+<!DOCTYPE html>
+
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>لعبة المطابقة العربية السحرية</title>
+<link href="https://fonts.googleapis.com/css2?family=Amiri:wght@400;700&family=Cairo:wght@300;400;600;700;900&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --gold: #f5c842;
+    --gold-light: #ffe98a;
+    --gold-dark: #c49a1a;
+    --purple: #4a1d7a;
+    --purple-mid: #6b2fa0;
+    --purple-light: #9b59d6;
+    --purple-dark: #2d0f4f;
+    --indigo: #1a1040;
+    --teal: #00d4aa;
+    --rose: #ff6b9d;
+    --bg: #0d0820;
+    --card-back: linear-gradient(135deg, #3d1270 0%, #6b2fa0 50%, #4a1d7a 100%);
+    --card-front: linear-gradient(135deg, #1a0a3a 0%, #2d0f5a 100%);
+    --shadow: 0 8px 32px rgba(0,0,0,0.5);
+  }
+
+- { margin: 0; padding: 0; box-sizing: border-box; }
+
+body {
+background: var(–bg);
+font-family: ‘Cairo’, sans-serif;
+color: #fff;
+min-height: 100vh;
+overflow-x: hidden;
+direction: rtl;
+}
+
+/* Starfield background */
+#stars-canvas {
+position: fixed;
+top: 0; left: 0;
+width: 100%; height: 100%;
+pointer-events: none;
+z-index: 0;
+}
+
+#app {
+position: relative;
+z-index: 1;
+max-width: 900px;
+margin: 0 auto;
+padding: 16px;
+}
+
+/* Header */
+.header {
+text-align: center;
+padding: 20px 0 10px;
+}
+
+.header h1 {
+font-family: ‘Amiri’, serif;
+font-size: clamp(1.6rem, 4vw, 2.8rem);
+background: linear-gradient(135deg, var(–gold-light), var(–gold), var(–gold-dark));
+-webkit-background-clip: text;
+-webkit-text-fill-color: transparent;
+background-clip: text;
+text-shadow: none;
+letter-spacing: 2px;
+filter: drop-shadow(0 0 12px rgba(245,200,66,0.5));
+}
+
+.header p {
+color: rgba(255,255,255,0.6);
+font-size: 0.9rem;
+margin-top: 4px;
+}
+
+/* Stats bar */
+.stats-bar {
+display: flex;
+justify-content: center;
+gap: 12px;
+flex-wrap: wrap;
+margin: 12px 0;
+}
+
+.stat-pill {
+background: rgba(255,255,255,0.07);
+border: 1px solid rgba(245,200,66,0.25);
+border-radius: 50px;
+padding: 6px 16px;
+font-size: 0.82rem;
+display: flex;
+align-items: center;
+gap: 6px;
+backdrop-filter: blur(8px);
+}
+
+.stat-pill .icon { font-size: 1rem; }
+.stat-pill .val {
+color: var(–gold);
+font-weight: 700;
+font-size: 1rem;
+}
+
+/* Image reveal container */
+.reveal-wrapper {
+position: relative;
+width: 100%;
+max-width: 560px;
+margin: 0 auto 14px;
+border-radius: 18px;
+overflow: hidden;
+border: 2px solid rgba(245,200,66,0.3);
+box-shadow: 0 0 40px rgba(107,47,160,0.5), var(–shadow);
+aspect-ratio: 16/7;
+background: #1a0a3a;
+}
+
+#hidden-img {
+position: absolute;
+top: 0; left: 0;
+width: 100%; height: 100%;
+object-fit: cover;
+opacity: 0.9;
+display: none;
+}
+
+#reveal-canvas {
+position: absolute;
+top: 0; left: 0;
+width: 100%; height: 100%;
+}
+
+.reveal-placeholder {
+position: absolute;
+top: 0; left: 0;
+width: 100%; height: 100%;
+display: flex;
+align-items: center;
+justify-content: center;
+flex-direction: column;
+gap: 8px;
+opacity: 0.35;
+}
+
+.reveal-placeholder .ph-icon { font-size: 2.5rem; }
+.reveal-placeholder p { font-size: 0.8rem; color: var(–gold); }
+
+/* Game board */
+.board-wrapper {
+position: relative;
+width: 100%;
+max-width: 560px;
+margin: 0 auto;
+}
+
+#game-board {
+display: grid;
+grid-template-columns: repeat(4, 1fr);
+gap: 10px;
+padding: 4px;
+}
+
+/* Card */
+.card {
+aspect-ratio: 1 / 1.15;
+cursor: pointer;
+perspective: 900px;
+position: relative;
+}
+
+.card-inner {
+width: 100%;
+height: 100%;
+transform-style: preserve-3d;
+transition: transform 0.55s cubic-bezier(.4,0,.2,1);
+position: relative;
+}
+
+.card.flipped .card-inner { transform: rotateY(180deg); }
+
+.card.matched .card-inner {
+transform: rotateY(180deg);
+animation: matchPulse 0.6s ease;
+}
+
+.card.shake { animation: shake 0.45s ease; }
+
+@keyframes matchPulse {
+0% { transform: rotateY(180deg) scale(1); }
+40% { transform: rotateY(180deg) scale(1.1); }
+70% { transform: rotateY(180deg) scale(0.97); }
+100% { transform: rotateY(180deg) scale(1); }
+}
+
+@keyframes shake {
+0%,100% { transform: translateX(0); }
+20% { transform: translateX(-7px); }
+40% { transform: translateX(7px); }
+60% { transform: translateX(-5px); }
+80% { transform: translateX(5px); }
+}
+
+.card-face {
+position: absolute;
+width: 100%; height: 100%;
+backface-visibility: hidden;
+border-radius: 14px;
+display: flex;
+align-items: center;
+justify-content: center;
+text-align: center;
+padding: 8px;
+overflow: hidden;
+}
+
+/* Card back (hidden face shown first) */
+.card-back {
+background: var(–card-back);
+border: 2px solid rgba(245,200,66,0.35);
+box-shadow: 0 4px 20px rgba(0,0,0,0.4), inset 0 0 30px rgba(107,47,160,0.3);
+}
+
+.card-back::before {
+content: ‘؟’;
+font-family: ‘Amiri’, serif;
+font-size: clamp(1.6rem, 4vw, 2.2rem);
+color: var(–gold);
+filter: drop-shadow(0 0 8px rgba(245,200,66,0.7));
+opacity: 0.8;
+}
+
+.card-back::after {
+content: ‘’;
+position: absolute;
+inset: 3px;
+border-radius: 11px;
+border: 1px solid rgba(245,200,66,0.15);
+pointer-events: none;
+}
+
+/* Decorative arabesque pattern on card back */
+.card-back .arabesque {
+position: absolute;
+inset: 0;
+opacity: 0.08;
+background-image: url(“data:image/svg+xml,%3Csvg width=‘60’ height=‘60’ viewBox=‘0 0 60 60’ xmlns=‘http://www.w3.org/2000/svg’%3E%3Cg fill=‘none’ fill-rule=‘evenodd’%3E%3Cg fill=’%23f5c842’ fill-opacity=‘1’%3E%3Cpath d=‘M30 0C13.43 0 0 13.43 0 30s13.43 30 30 30 30-13.43 30-30S46.57 0 30 0zm0 54C16.77 54 6 43.23 6 30S16.77 6 30 6s24 10.77 24 24-10.77 24-24 24zm0-42c-9.94 0-18 8.06-18 18s8.06 18 18 18 18-8.06 18-18-8.06-18-18-18zm0 30c-6.63 0-12-5.37-12-12s5.37-12 12-12 12 5.37 12 12-5.37 12-12 12z’/%3E%3C/g%3E%3C/g%3E%3C/svg%3E”);
+background-size: 40px;
+pointer-events: none;
+}
+
+/* Card front (revealed face) */
+.card-front {
+background: var(–card-front);
+border: 2px solid rgba(245,200,66,0.5);
+transform: rotateY(180deg);
+flex-direction: column;
+gap: 4px;
+box-shadow: 0 4px 20px rgba(0,0,0,0.4), inset 0 0 20px rgba(74,29,122,0.5);
+}
+
+.card.matched .card-front {
+border-color: var(–teal);
+box-shadow: 0 0 25px rgba(0,212,170,0.5), 0 4px 20px rgba(0,0,0,0.4);
+background: linear-gradient(135deg, #0a2a2a, #0d3d30);
+}
+
+.card-front .card-type {
+font-size: 0.55rem;
+text-transform: uppercase;
+letter-spacing: 1.5px;
+color: rgba(255,255,255,0.4);
+font-weight: 600;
+}
+
+.card-front .card-text {
+font-family: ‘Amiri’, serif;
+font-size: clamp(0.9rem, 2.5vw, 1.3rem);
+color: var(–gold-light);
+font-weight: 700;
+line-height: 1.3;
+word-break: break-word;
+}
+
+.card-front.verb-card .card-text {
+font-size: clamp(1.1rem, 3vw, 1.6rem);
+color: #fff;
+filter: drop-shadow(0 0 6px rgba(245,200,66,0.5));
+}
+
+.card:hover:not(.flipped):not(.matched) .card-back {
+border-color: rgba(245,200,66,0.7);
+box-shadow: 0 0 20px rgba(245,200,66,0.3), 0 4px 20px rgba(0,0,0,0.4);
+}
+
+/* Hint panel */
+.hint-panel {
+max-width: 560px;
+margin: 12px auto 0;
+background: rgba(0,212,170,0.08);
+border: 1px solid rgba(0,212,170,0.3);
+border-radius: 12px;
+padding: 10px 16px;
+font-size: 0.82rem;
+color: rgba(255,255,255,0.85);
+text-align: center;
+direction: rtl;
+min-height: 44px;
+transition: all 0.4s ease;
+opacity: 0;
+}
+
+.hint-panel.visible { opacity: 1; }
+.hint-panel strong { color: var(–teal); }
+
+/* Buttons */
+.controls {
+display: flex;
+justify-content: center;
+gap: 10px;
+margin: 14px 0 20px;
+flex-wrap: wrap;
+}
+
+.btn {
+font-family: ‘Cairo’, sans-serif;
+font-size: 0.85rem;
+font-weight: 700;
+padding: 10px 24px;
+border-radius: 50px;
+border: none;
+cursor: pointer;
+transition: all 0.25s ease;
+letter-spacing: 0.5px;
+}
+
+.btn-primary {
+background: linear-gradient(135deg, var(–gold-dark), var(–gold));
+color: var(–purple-dark);
+box-shadow: 0 4px 20px rgba(245,200,66,0.35);
+}
+
+.btn-primary:hover {
+transform: translateY(-2px);
+box-shadow: 0 6px 28px rgba(245,200,66,0.5);
+}
+
+.btn-secondary {
+background: rgba(255,255,255,0.08);
+color: rgba(255,255,255,0.8);
+border: 1px solid rgba(255,255,255,0.2);
+}
+
+.btn-secondary:hover {
+background: rgba(255,255,255,0.14);
+transform: translateY(-2px);
+}
+
+/* Win overlay */
+#win-overlay {
+display: none;
+position: fixed;
+inset: 0;
+background: rgba(0,0,0,0.85);
+z-index: 100;
+align-items: center;
+justify-content: center;
+backdrop-filter: blur(8px);
+}
+
+#win-overlay.show { display: flex; }
+
+.win-box {
+background: linear-gradient(135deg, #1a0a3a, #2d0f5a);
+border: 2px solid var(–gold);
+border-radius: 24px;
+padding: 36px 40px;
+max-width: 420px;
+width: 90%;
+text-align: center;
+box-shadow: 0 0 60px rgba(245,200,66,0.3), var(–shadow);
+animation: winEntrance 0.6s cubic-bezier(.2,1.4,.4,1);
+}
+
+@keyframes winEntrance {
+from { transform: scale(0.5) rotate(-5deg); opacity: 0; }
+to { transform: scale(1) rotate(0deg); opacity: 1; }
+}
+
+.win-box h2 {
+font-family: ‘Amiri’, serif;
+font-size: 2rem;
+color: var(–gold);
+margin-bottom: 8px;
+filter: drop-shadow(0 0 12px rgba(245,200,66,0.6));
+}
+
+.win-box .win-emoji { font-size: 3rem; margin-bottom: 8px; display: block; }
+
+.win-stats {
+display: grid;
+grid-template-columns: 1fr 1fr;
+gap: 10px;
+margin: 18px 0;
+}
+
+.win-stat {
+background: rgba(255,255,255,0.06);
+border-radius: 12px;
+padding: 10px;
+}
+
+.win-stat .ws-label {
+font-size: 0.7rem;
+color: rgba(255,255,255,0.5);
+display: block;
+}
+
+.win-stat .ws-val {
+font-size: 1.4rem;
+font-weight: 900;
+color: var(–gold);
+}
+
+.win-score-big {
+font-size: 3rem;
+font-weight: 900;
+color: var(–gold);
+filter: drop-shadow(0 0 20px rgba(245,200,66,0.7));
+margin: 8px 0;
+}
+
+.accuracy-badge {
+display: inline-block;
+padding: 4px 14px;
+border-radius: 50px;
+font-size: 0.8rem;
+font-weight: 700;
+margin-bottom: 10px;
+}
+
+/* Particles */
+.particle {
+position: fixed;
+pointer-events: none;
+z-index: 50;
+border-radius: 50%;
+animation: particleFly 1s ease-out forwards;
+}
+
+@keyframes particleFly {
+from { opacity: 1; transform: translate(0,0) scale(1); }
+to { opacity: 0; transform: translate(var(–tx), var(–ty)) scale(0); }
+}
+
+/* Score popup */
+.score-popup {
+position: fixed;
+pointer-events: none;
+z-index: 60;
+font-family: ‘Cairo’, sans-serif;
+font-weight: 900;
+font-size: 1.4rem;
+color: var(–gold);
+filter: drop-shadow(0 0 8px rgba(245,200,66,0.8));
+animation: scoreFloat 1.2s ease-out forwards;
+}
+
+@keyframes scoreFloat {
+from { opacity: 1; transform: translateY(0) scale(1); }
+to { opacity: 0; transform: translateY(-80px) scale(0.8); }
+}
+
+/* Combo badge */
+.combo-badge {
+position: fixed;
+top: 50%;
+left: 50%;
+transform: translate(-50%,-50%);
+z-index: 60;
+font-family: ‘Amiri’, serif;
+font-size: 2.5rem;
+color: var(–gold);
+filter: drop-shadow(0 0 20px rgba(245,200,66,0.9));
+animation: comboPop 1s ease-out forwards;
+pointer-events: none;
+text-align: center;
+}
+
+@keyframes comboPop {
+0% { opacity: 0; transform: translate(-50%,-50%) scale(0.5); }
+30% { opacity: 1; transform: translate(-50%,-50%) scale(1.2); }
+70% { opacity: 1; transform: translate(-50%,-50%) scale(1); }
+100% { opacity: 0; transform: translate(-50%,-50%) scale(0.8); }
+}
+
+/* Loading screen */
+#loading-screen {
+position: fixed;
+inset: 0;
+background: var(–bg);
+z-index: 200;
+display: flex;
+align-items: center;
+justify-content: center;
+flex-direction: column;
+gap: 16px;
+transition: opacity 0.5s ease;
+}
+
+#loading-screen.fade-out { opacity: 0; pointer-events: none; }
+
+.loading-title {
+font-family: ‘Amiri’, serif;
+font-size: 2rem;
+color: var(–gold);
+filter: drop-shadow(0 0 16px rgba(245,200,66,0.6));
+animation: pulse 2s ease-in-out infinite;
+}
+
+@keyframes pulse {
+0%,100% { opacity: 1; }
+50% { opacity: 0.5; }
+}
+
+.loading-dots { display: flex; gap: 8px; }
+.loading-dot {
+width: 10px; height: 10px;
+background: var(–gold);
+border-radius: 50%;
+animation: dotBounce 1.2s ease-in-out infinite;
+}
+.loading-dot:nth-child(2) { animation-delay: 0.2s; }
+.loading-dot:nth-child(3) { animation-delay: 0.4s; }
+@keyframes dotBounce {
+0%,100% { transform: translateY(0); }
+50% { transform: translateY(-12px); }
+}
+
+/* Progress bar for matches */
+.progress-bar-wrap {
+max-width: 560px;
+margin: 0 auto 10px;
+background: rgba(255,255,255,0.07);
+border-radius: 50px;
+height: 6px;
+overflow: hidden;
+}
+
+.progress-bar-fill {
+height: 100%;
+background: linear-gradient(90deg, var(–teal), var(–gold));
+border-radius: 50px;
+transition: width 0.5s ease;
+}
+
+@media (max-width: 500px) {
+#game-board { gap: 7px; }
+.card-front .card-text { font-size: 0.78rem; }
+.card-front.verb-card .card-text { font-size: 1rem; }
+.stats-bar { gap: 6px; }
+.stat-pill { padding: 5px 10px; font-size: 0.75rem; }
+}
+</style>
+
+</head>
+<body>
+
+<canvas id="stars-canvas"></canvas>
+
+<div id="loading-screen">
+  <div class="loading-title">✨ لعبة المطابقة العربية ✨</div>
+  <div class="loading-dots">
+    <div class="loading-dot"></div>
+    <div class="loading-dot"></div>
+    <div class="loading-dot"></div>
+  </div>
+</div>
+
+<div id="app">
+  <div class="header">
+    <h1>لعبة المطابقة العربية السحرية</h1>
+    <p>طابق الأفعال مع تصنيفاتها الصرفية الصحيحة</p>
+  </div>
+
+  <div class="stats-bar">
+    <div class="stat-pill"><span class="icon">⏱️</span><span class="val" id="timer-val">00:00</span><span>الوقت</span></div>
+    <div class="stat-pill"><span class="icon">🔄</span><span class="val" id="moves-val">0</span><span>حركة</span></div>
+    <div class="stat-pill"><span class="icon">✅</span><span class="val" id="matches-val">0</span><span>/8 تطابق</span></div>
+    <div class="stat-pill"><span class="icon">🎯</span><span class="val" id="score-val">0</span><span>نقطة</span></div>
+    <div class="stat-pill"><span class="icon">🔥</span><span class="val" id="combo-val">x1</span><span>combo</span></div>
+  </div>
+
+  <div class="reveal-wrapper">
+    <img id="hidden-img" src="genie.png" alt="hidden" crossorigin="anonymous" />
+    <canvas id="reveal-canvas"></canvas>
+    <div class="reveal-placeholder" id="reveal-placeholder">
+      <span class="ph-icon">🌙</span>
+      <p>أكمل التطابقات لكشف الصورة</p>
+    </div>
+  </div>
+
+  <div class="progress-bar-wrap">
+    <div class="progress-bar-fill" id="progress-fill" style="width:0%"></div>
+  </div>
+
+  <div class="board-wrapper">
+    <div id="game-board"></div>
+  </div>
+
+  <div class="hint-panel" id="hint-panel"></div>
+
+  <div class="controls">
+    <button class="btn btn-primary" onclick="GameEngine.restart()">🔄 لعبة جديدة</button>
+    <button class="btn btn-secondary" onclick="GameEngine.showRules()">📖 القواعد</button>
+  </div>
+</div>
+
+<!-- Win overlay -->
+
+<div id="win-overlay">
+  <div class="win-box">
+    <span class="win-emoji">🏆</span>
+    <h2>أحسنت! انتهت اللعبة</h2>
+    <div class="win-score-big" id="win-score-display">0</div>
+    <div class="accuracy-badge" id="win-accuracy-badge">دقة 100%</div>
+    <div class="win-stats">
+      <div class="win-stat"><span class="ws-label">الوقت</span><span class="ws-val" id="ws-time">-</span></div>
+      <div class="win-stat"><span class="ws-label">الحركات</span><span class="ws-val" id="ws-moves">-</span></div>
+      <div class="win-stat"><span class="ws-label">أفضل combo</span><span class="ws-val" id="ws-combo">-</span></div>
+      <div class="win-stat"><span class="ws-label">الدقة</span><span class="ws-val" id="ws-acc">-</span></div>
+    </div>
+    <p id="win-performance-msg" style="font-size:0.85rem;color:rgba(255,255,255,0.7);margin-bottom:16px;"></p>
+    <button class="btn btn-primary" onclick="GameEngine.restart()" style="width:100%">🎮 العب مجدداً</button>
+  </div>
+</div>
+
+<script>
+// ═══════════════════════════════════════════════
+// DATABASE.JS — Arabic verbs database
+// ═══════════════════════════════════════════════
+const ArabicDatabase = {
+  pairs: [
+    // صحيح سالم
+    { word: "كَتَبَ", classification: "صحيح سالم", explanation: "كَتَبَ: فعل صحيح سالم لأن حروفه الأصلية صحيحة وخالية من الهمزة والتضعيف وحروف العلة." },
+    { word: "نَصَرَ", classification: "صحيح سالم", explanation: "نَصَرَ: فعل صحيح سالم، جميع حروفه صحيحة دون علة أو تضعيف أو همزة." },
+    { word: "جَلَسَ", classification: "صحيح سالم", explanation: "جَلَسَ: فعل صحيح سالم، حروفه الثلاثة صحيحة سالمة." },
+    { word: "ضَرَبَ", classification: "صحيح سالم", explanation: "ضَرَبَ: فعل صحيح سالم، لا يحتوي على حرف علة أو همزة أو تضعيف." },
+    { word: "فَتَحَ", classification: "صحيح سالم", explanation: "فَتَحَ: فعل صحيح سالم، حروفه الأصلية (ف،ت،ح) كلها صحيحة." },
+    { word: "خَرَجَ", classification: "صحيح سالم", explanation: "خَرَجَ: فعل صحيح سالم لخلوه من أي علة أو همزة أو تضعيف." },
+    // صحيح مهموز
+    { word: "أَكَلَ", classification: "صحيح مهموز", explanation: "أَكَلَ: فعل صحيح مهموز لأن فاء الفعل همزة." },
+    { word: "أَمَرَ", classification: "صحيح مهموز", explanation: "أَمَرَ: فعل صحيح مهموز، الهمزة في أول الفعل (الفاء)." },
+    { word: "سَأَلَ", classification: "صحيح مهموز", explanation: "سَأَلَ: فعل صحيح مهموز، الهمزة في عين الفعل (وسطه)." },
+    { word: "قَرَأَ", classification: "صحيح مهموز", explanation: "قَرَأَ: فعل صحيح مهموز، الهمزة في لام الفعل (آخره)." },
+    { word: "أَخَذَ", classification: "صحيح مهموز", explanation: "أَخَذَ: فعل صحيح مهموز لوجود الهمزة في فاء الفعل." },
+    { word: "بَدَأَ", classification: "صحيح مهموز", explanation: "بَدَأَ: فعل صحيح مهموز، الهمزة في لام الفعل (آخره)." },
+    // صحيح مضعف
+    { word: "مَدَّ", classification: "صحيح مضعف", explanation: "مَدَّ: فعل صحيح مضعف لأن عينه ولامه من جنس واحد (دال مشددة)." },
+    { word: "رَدَّ", classification: "صحيح مضعف", explanation: "رَدَّ: فعل صحيح مضعف، العين واللام كلاهما دال." },
+    { word: "حَبَّ", classification: "صحيح مضعف", explanation: "حَبَّ: فعل صحيح مضعف، تضعيف في عين اللام (باء مشددة)." },
+    { word: "شَدَّ", classification: "صحيح مضعف", explanation: "شَدَّ: فعل صحيح مضعف، العين واللام متحدان (دال مشددة)." },
+    // معتل مثال
+    { word: "وَعَدَ", classification: "معتل مثال", explanation: "وَعَدَ: فعل معتل مثال لأن أوله (فاؤه) حرف علة وهو الواو." },
+    { word: "وَصَلَ", classification: "معتل مثال", explanation: "وَصَلَ: فعل معتل مثال، فاؤه واو وهي حرف علة." },
+    { word: "وَجَدَ", classification: "معتل مثال", explanation: "وَجَدَ: فعل معتل مثال، الحرف الأول (واو) حرف علة." },
+    { word: "يَبِسَ", classification: "معتل مثال", explanation: "يَبِسَ: فعل معتل مثال لأن فاءه ياء وهي حرف علة." },
+    // معتل أجوف
+    { word: "قَالَ", classification: "معتل أجوف", explanation: "قَالَ: فعل معتل أجوف لأن عينه (وسطه) حرف علة وهو الألف الأصلها واو." },
+    { word: "بَاعَ", classification: "معتل أجوف", explanation: "بَاعَ: فعل معتل أجوف، عينه حرف علة (الياء الممدودة)." },
+    { word: "نَامَ", classification: "معتل أجوف", explanation: "نَامَ: فعل معتل أجوف، وسطه (عينه) حرف علة." },
+    { word: "طَارَ", classification: "معتل أجوف", explanation: "طَارَ: فعل معتل أجوف، عينه واو مقلوبة إلى ألف." },
+    { word: "زَادَ", classification: "معتل أجوف", explanation: "زَادَ: فعل معتل أجوف لأن حرف العلة في وسطه." },
+    // معتل ناقص
+    { word: "رَمَى", classification: "معتل ناقص", explanation: "رَمَى: فعل معتل ناقص لأن آخره (لامه) حرف علة وهو الياء." },
+    { word: "دَعَا", classification: "معتل ناقص", explanation: "دَعَا: فعل معتل ناقص، آخره واو (حرف علة)." },
+    { word: "مَشَى", classification: "معتل ناقص", explanation: "مَشَى: فعل معتل ناقص، لامه ياء حرف علة." },
+    { word: "نَسِيَ", classification: "معتل ناقص", explanation: "نَسِيَ: فعل معتل ناقص، لامه ياء." },
+    { word: "غَزَا", classification: "معتل ناقص", explanation: "غَزَا: فعل معتل ناقص، لامه واو حرف علة." },
+    // معتل لفيف
+    { word: "وَقَى", classification: "معتل لفيف مفروق", explanation: "وَقَى: فعل معتل لفيف مفروق لأن فاءه ولامه كلاهما حرف علة." },
+    { word: "وَوَى", classification: "معتل لفيف مقرون", explanation: "وَوَى: فعل معتل لفيف مقرون لأن عينه ولامه كلاهما حرف علة." },
+  ],
+
+  getRandomPairs(count = 8) {
+    const shuffled = [...this.pairs].sort(() => Math.random() - 0.5);
+    return shuffled.slice(0, count);
+  }
+};
+
+// ═══════════════════════════════════════════════
+// CANVAS REVEAL SYSTEM
+// ═══════════════════════════════════════════════
+const RevealSystem = {
+  canvas: null,
+  ctx: null,
+  cols: 4,
+  rows: 4,
+  totalCells: 16,
+  revealedCells: new Set(),
+  cellOrder: [],
+
+  init() {
+    this.canvas = document.getElementById('reveal-canvas');
+    this.ctx = this.canvas.getContext('2d');
+    this.resizeCanvas();
+    this.resetMask();
+    window.addEventListener('resize', () => this.resizeCanvas());
+  },
+
+  resizeCanvas() {
+    const wrapper = this.canvas.parentElement;
+    this.canvas.width = wrapper.clientWidth;
+    this.canvas.height = wrapper.clientHeight;
+    this.redrawMask();
+  },
+
+  resetMask() {
+    this.revealedCells.clear();
+    // Create shuffled order for cell reveals
+    this.cellOrder = Array.from({length: this.totalCells}, (_, i) => i).sort(() => Math.random() - 0.5);
+    this.redrawMask();
+  },
+
+  redrawMask() {
+    const { canvas, ctx, cols, rows, revealedCells } = this;
+    const cw = canvas.width / cols;
+    const ch = canvas.height / rows;
+
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+    // Draw black mask over non-revealed cells
+    for (let i = 0; i < this.totalCells; i++) {
+      const col = i % cols;
+      const row = Math.floor(i / cols);
+      const x = col * cw;
+      const y = row * ch;
+
+      if (!revealedCells.has(i)) {
+        ctx.fillStyle = `rgba(13,8,32,0.96)`;
+        ctx.fillRect(x, y, cw, ch);
+        // Add subtle pattern
+        ctx.fillStyle = `rgba(245,200,66,0.04)`;
+        ctx.fillRect(x + 2, y + 2, cw - 4, ch - 4);
+      }
+    }
+  },
+
+  revealNext(matchIndex) {
+    const img = document.getElementById('hidden-img');
+    if (img.style.display !== 'block') {
+      img.style.display = 'block';
+      document.getElementById('reveal-placeholder').style.display = 'none';
+    }
+
+    // Reveal 2 cells per match (matchIndex*2 and matchIndex*2+1)
+    const idx1 = this.cellOrder[matchIndex * 2];
+    const idx2 = this.cellOrder[matchIndex * 2 + 1];
+
+    this.animateReveal(idx1, () => {
+      this.animateReveal(idx2);
+    });
+  },
+
+  animateReveal(cellIndex, callback) {
+    const { canvas, ctx, cols, rows } = this;
+    const cw = canvas.width / cols;
+    const ch = canvas.height / rows;
+    const col = cellIndex % cols;
+    const row = Math.floor(cellIndex / cols);
+    const x = col * cw;
+    const y = row * ch;
+
+    let alpha = 0.96;
+    const step = () => {
+      alpha -= 0.06;
+      if (alpha <= 0) {
+        this.revealedCells.add(cellIndex);
+        this.redrawMask();
+        // Gold flash effect
+        ctx.fillStyle = 'rgba(245,200,66,0.3)';
+        ctx.fillRect(x, y, cw, ch);
+        setTimeout(() => { this.redrawMask(); }, 200);
+        if (callback) callback();
+        return;
+      }
+      ctx.clearRect(x, y, cw, ch);
+      if (alpha > 0) {
+        ctx.fillStyle = `rgba(13,8,32,${alpha})`;
+        ctx.fillRect(x, y, cw, ch);
+      }
+      requestAnimationFrame(step);
+    };
+    requestAnimationFrame(step);
+  },
+
+  revealAll(callback) {
+    let remaining = [];
+    for (let i = 0; i < this.totalCells; i++) {
+      if (!this.revealedCells.has(i)) remaining.push(i);
+    }
+    let idx = 0;
+    const revealOne = () => {
+      if (idx >= remaining.length) { if (callback) callback(); return; }
+      this.animateReveal(remaining[idx++], revealOne);
+    };
+    revealOne();
+  }
+};
+
+// ═══════════════════════════════════════════════
+// CARD CLASS
+// ═══════════════════════════════════════════════
+class Card {
+  constructor(id, text, type, pairId) {
+    this.id = id;
+    this.text = text;
+    this.type = type; // 'verb' or 'classification'
+    this.pairId = pairId;
+    this.isFlipped = false;
+    this.isMatched = false;
+    this.element = null;
+  }
+
+  createElement() {
+    const el = document.createElement('div');
+    el.className = 'card';
+    el.dataset.id = this.id;
+    el.innerHTML = `
+      <div class="card-inner">
+        <div class="card-face card-back">
+          <div class="arabesque"></div>
+        </div>
+        <div class="card-face card-front ${this.type === 'verb' ? 'verb-card' : ''}">
+          <span class="card-type">${this.type === 'verb' ? 'الفعل' : 'النوع'}</span>
+          <span class="card-text">${this.text}</span>
+        </div>
+      </div>
+    `;
+    el.addEventListener('click', () => GameEngine.handleCardClick(this));
+    this.element = el;
+    return el;
+  }
+
+  flip() {
+    this.isFlipped = true;
+    this.element.classList.add('flipped');
+  }
+
+  unflip() {
+    this.isFlipped = false;
+    this.element.classList.remove('flipped');
+  }
+
+  markMatched() {
+    this.isMatched = true;
+    this.element.classList.add('matched');
+  }
+
+  shake() {
+    this.element.classList.remove('shake');
+    void this.element.offsetWidth;
+    this.element.classList.add('shake');
+    setTimeout(() => this.element.classList.remove('shake'), 500);
+  }
+}
+
+// ═══════════════════════════════════════════════
+// MATCH MANAGER
+// ═══════════════════════════════════════════════
+const MatchManager = {
+  flippedCards: [],
+  isChecking: false,
+
+  reset() {
+    this.flippedCards = [];
+    this.isChecking = false;
+  },
+
+  addCard(card) {
+    this.flippedCards.push(card);
+    return this.flippedCards.length === 2;
+  },
+
+  checkMatch() {
+    const [a, b] = this.flippedCards;
+    const match = a.pairId === b.pairId && a.type !== b.type;
+    this.flippedCards = [];
+    return match;
+  }
+};
+
+// ═══════════════════════════════════════════════
+// STARS BACKGROUND
+// ═══════════════════════════════════════════════
+const StarsBackground = {
+  canvas: null,
+  ctx: null,
+  stars: [],
+  particles: [],
+
+  init() {
+    this.canvas = document.getElementById('stars-canvas');
+    this.ctx = this.canvas.getContext('2d');
+    this.resize();
+    this.generate();
+    window.addEventListener('resize', () => { this.resize(); this.generate(); });
+    this.animate();
+  },
+
+  resize() {
+    this.canvas.width = window.innerWidth;
+    this.canvas.height = window.innerHeight;
+  },
+
+  generate() {
+    this.stars = Array.from({length: 120}, () => ({
+      x: Math.random() * this.canvas.width,
+      y: Math.random() * this.canvas.height,
+      r: Math.random() * 1.5 + 0.3,
+      alpha: Math.random() * 0.8 + 0.2,
+      speed: Math.random() * 0.3 + 0.05,
+      phase: Math.random() * Math.PI * 2,
+    }));
+  },
+
+  animate() {
+    const { canvas, ctx, stars } = this;
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+    const t = Date.now() * 0.001;
+    stars.forEach(s => {
+      const a = s.alpha * (0.6 + 0.4 * Math.sin(t * s.speed + s.phase));
+      ctx.beginPath();
+      ctx.arc(s.x, s.y, s.r, 0, Math.PI * 2);
+      ctx.fillStyle = `rgba(255,240,200,${a})`;
+      ctx.fill();
+    });
+
+    requestAnimationFrame(() => this.animate());
+  }
+};
+
+// ═══════════════════════════════════════════════
+// UI HELPERS
+// ═══════════════════════════════════════════════
+const UI = {
+  updateStats(moves, matches, score, combo, elapsed) {
+    document.getElementById('moves-val').textContent = moves;
+    document.getElementById('matches-val').textContent = matches;
+    document.getElementById('score-val').textContent = score;
+    document.getElementById('combo-val').textContent = `x${combo}`;
+    const m = String(Math.floor(elapsed / 60)).padStart(2, '0');
+    const s = String(elapsed % 60).padStart(2, '0');
+    document.getElementById('timer-val').textContent = `${m}:${s}`;
+  },
+
+  updateProgress(matches, total) {
+    const pct = (matches / total) * 100;
+    document.getElementById('progress-fill').style.width = pct + '%';
+  },
+
+  showHint(explanation) {
+    const panel = document.getElementById('hint-panel');
+    panel.innerHTML = `<strong>✨ تطابق!</strong> ${explanation}`;
+    panel.classList.add('visible');
+    clearTimeout(this._hintTimer);
+    this._hintTimer = setTimeout(() => panel.classList.remove('visible'), 5000);
+  },
+
+  spawnParticles(x, y, count = 12) {
+    for (let i = 0; i < count; i++) {
+      const el = document.createElement('div');
+      el.className = 'particle';
+      const size = Math.random() * 8 + 4;
+      const colors = ['#f5c842','#00d4aa','#ff6b9d','#9b59d6','#fff'];
+      el.style.cssText = `
+        left:${x}px; top:${y}px;
+        width:${size}px; height:${size}px;
+        background:${colors[Math.floor(Math.random()*colors.length)]};
+        --tx:${(Math.random()-0.5)*160}px;
+        --ty:${(Math.random()-1.2)*160}px;
+      `;
+      document.body.appendChild(el);
+      setTimeout(() => el.remove(), 1000);
+    }
+  },
+
+  showScorePopup(x, y, text) {
+    const el = document.createElement('div');
+    el.className = 'score-popup';
+    el.textContent = text;
+    el.style.cssText = `left:${x - 20}px; top:${y - 30}px;`;
+    document.body.appendChild(el);
+    setTimeout(() => el.remove(), 1200);
+  },
+
+  showCombo(text) {
+    const existing = document.querySelector('.combo-badge');
+    if (existing) existing.remove();
+    const el = document.createElement('div');
+    el.className = 'combo-badge';
+    el.textContent = text;
+    document.body.appendChild(el);
+    setTimeout(() => el.remove(), 1000);
+  },
+
+  showWinScreen(stats) {
+    const overlay = document.getElementById('win-overlay');
+    document.getElementById('win-score-display').textContent = stats.score;
+    document.getElementById('ws-time').textContent = stats.time;
+    document.getElementById('ws-moves').textContent = stats.moves;
+    document.getElementById('ws-combo').textContent = `x${stats.bestCombo}`;
+    document.getElementById('ws-acc').textContent = stats.accuracy + '%';
+
+    const badge = document.getElementById('win-accuracy-badge');
+    badge.textContent = `دقة ${stats.accuracy}%`;
+    badge.style.background = stats.accuracy >= 80 ? 'rgba(0,212,170,0.2)' : 'rgba(245,200,66,0.2)';
+    badge.style.color = stats.accuracy >= 80 ? '#00d4aa' : '#f5c842';
+    badge.style.border = `1px solid ${stats.accuracy >= 80 ? '#00d4aa' : '#f5c842'}`;
+
+    let msg = '';
+    if (stats.accuracy >= 90) msg = '🌟 أداء رائع جداً! أنت متقن لتصنيف الأفعال العربية!';
+    else if (stats.accuracy >= 70) msg = '👍 أداء جيد! واصل التدريب لتحسين دقتك.';
+    else msg = '📚 لا بأس! التكرار يُعلّم الشاطر. حاول مجدداً!';
+    document.getElementById('win-performance-msg').textContent = msg;
+
+    overlay.classList.add('show');
+  }
+};
+
+// ═══════════════════════════════════════════════
+// GAME ENGINE — Main Controller
+// ═══════════════════════════════════════════════
+const GameEngine = {
+  cards: [],
+  selectedPairs: [],
+  moves: 0,
+  matches: 0,
+  score: 0,
+  combo: 1,
+  bestCombo: 1,
+  totalAttempts: 0,
+  timerInterval: null,
+  elapsedSeconds: 0,
+  isActive: false,
+  TOTAL_PAIRS: 8,
+
+  init() {
+    StarsBackground.init();
+    RevealSystem.init();
+    // Load the hidden image
+    const img = document.getElementById('hidden-img');
+    img.onload = () => {};
+    img.onerror = () => {
+      // Use a fallback gradient if image fails
+      img.src = 'data:image/svg+xml,' + encodeURIComponent(`
+        <svg xmlns='http://www.w3.org/2000/svg' width='800' height='350'>
+          <defs><linearGradient id='g' x1='0%' y1='0%' x2='100%' y2='100%'>
+            <stop offset='0%' stop-color='#1a0a3a'/>
+            <stop offset='50%' stop-color='#4a1d7a'/>
+            <stop offset='100%' stop-color='#f5c842' stop-opacity='0.5'/>
+          </linearGradient></defs>
+          <rect width='800' height='350' fill='url(#g)'/>
+          <text x='400' y='175' text-anchor='middle' font-size='48' fill='rgba(245,200,66,0.8)' font-family='serif'>✨ مبروك ✨</text>
+        </svg>
+      `);
+    };
+
+    setTimeout(() => {
+      document.getElementById('loading-screen').classList.add('fade-out');
+      setTimeout(() => {
+        document.getElementById('loading-screen').style.display = 'none';
+        this.startNewGame();
+      }, 500);
+    }, 1200);
+  },
+
+  startNewGame() {
+    clearInterval(this.timerInterval);
+    this.moves = 0;
+    this.matches = 0;
+    this.score = 0;
+    this.combo = 1;
+    this.bestCombo = 1;
+    this.totalAttempts = 0;
+    this.elapsedSeconds = 0;
+    this.isActive = true;
+    document.getElementById('win-overlay').classList.remove('show');
+    document.getElementById('hint-panel').classList.remove('visible');
+    document.getElementById('reveal-placeholder').style.display = 'flex';
+    document.getElementById('hidden-img').style.display = 'none';
+
+    RevealSystem.resetMask();
+    this.selectedPairs = ArabicDatabase.getRandomPairs(this.TOTAL_PAIRS);
+    this.buildCards();
+    this.renderBoard();
+    UI.updateStats(0, 0, 0, 1, 0);
+    UI.updateProgress(0, this.TOTAL_PAIRS);
+
+    this.timerInterval = setInterval(() => {
+      if (this.isActive) {
+        this.elapsedSeconds++;
+        UI.updateStats(this.moves, this.matches, this.score, this.combo, this.elapsedSeconds);
+      }
+    }, 1000);
+  },
+
+  buildCards() {
+    this.cards = [];
+    let idCounter = 0;
+    this.selectedPairs.forEach((pair, pairIdx) => {
+      this.cards.push(new Card(idCounter++, pair.word, 'verb', pairIdx));
+      this.cards.push(new Card(idCounter++, pair.classification, 'classification', pairIdx));
+    });
+    // Shuffle
+    this.cards.sort(() => Math.random() - 0.5);
+  },
+
+  renderBoard() {
+    const board = document.getElementById('game-board');
+    board.innerHTML = '';
+    MatchManager.reset();
+    this.cards.forEach(card => board.appendChild(card.createElement()));
+  },
+
+  handleCardClick(card) {
+    if (!this.isActive) return;
+    if (card.isFlipped || card.isMatched) return;
+    if (MatchManager.isChecking) return;
+    if (MatchManager.flippedCards.length >= 2) return;
+
+    card.flip();
+    const ready = MatchManager.addCard(card);
+
+    if (!ready) return;
+
+    this.moves++;
+    this.totalAttempts++;
+    MatchManager.isChecking = true;
+
+    setTimeout(() => this.evaluateMatch(), 700);
+  },
+
+  evaluateMatch() {
+    const matched = MatchManager.checkMatch();
+
+    if (matched) {
+      // Get the two cards
+      const board = document.getElementById('game-board');
+      const matchedCards = this.cards.filter(c => c.isMatched === false && c.isFlipped);
+      matchedCards.forEach(c => c.markMatched());
+
+      this.matches++;
+      this.combo = this.combo < 5 ? this.combo + 1 : 5;
+      if (this.combo > this.bestCombo) this.bestCombo = this.combo;
+
+      // Scoring
+      const basePoints = 100;
+      const timeBonus = Math.max(0, 50 - this.elapsedSeconds);
+      const comboBonus = this.combo * 20;
+      const points = basePoints + timeBonus + comboBonus;
+      this.score += points;
+
+      // Effects
+      const cardEls = document.querySelectorAll('.card.matched:not([data-effect-done])');
+      cardEls.forEach(el => {
+        el.setAttribute('data-effect-done', '1');
+        const rect = el.getBoundingClientRect();
+        const cx = rect.left + rect.width / 2;
+        const cy = rect.top + rect.height / 2;
+        UI.spawnParticles(cx, cy, 16);
+        UI.showScorePopup(cx, cy, `+${points}`);
+      });
+
+      if (this.combo >= 3) {
+        UI.showCombo(`🔥 combo x${this.combo}!`);
+      }
+
+      // Show explanation
+      const pair = this.selectedPairs[matchedCards[0]?.pairId];
+      if (pair) UI.showHint(pair.explanation);
+
+      // Reveal image
+      RevealSystem.revealNext(this.matches - 1);
+      UI.updateProgress(this.matches, this.TOTAL_PAIRS);
+
+      if (this.matches === this.TOTAL_PAIRS) {
+        setTimeout(() => this.winGame(), 800);
+      }
+    } else {
+      // Wrong — unflip
+      const flipped = this.cards.filter(c => c.isFlipped && !c.isMatched);
+      flipped.forEach(c => {
+        c.shake();
+        setTimeout(() => c.unflip(), 600);
+      });
+      this.combo = 1;
+      // Small score penalty
+      this.score = Math.max(0, this.score - 10);
+    }
+
+    UI.updateStats(this.moves, this.matches, this.score, this.combo, this.elapsedSeconds);
+    MatchManager.isChecking = false;
+  },
+
+  winGame() {
+    this.isActive = false;
+    clearInterval(this.timerInterval);
+
+    RevealSystem.revealAll(() => {
+      const accuracy = this.totalAttempts > 0
+        ? Math.round((this.matches / this.totalAttempts) * 100)
+        : 100;
+
+      const m = String(Math.floor(this.elapsedSeconds / 60)).padStart(2, '0');
+      const s = String(this.elapsedSeconds % 60).padStart(2, '0');
+
+      // Victory particles
+      for (let i = 0; i < 5; i++) {
+        setTimeout(() => {
+          UI.spawnParticles(
+            Math.random() * window.innerWidth,
+            Math.random() * window.innerHeight * 0.5,
+            20
+          );
+        }, i * 300);
+      }
+
+      setTimeout(() => {
+        UI.showWinScreen({
+          score: this.score,
+          time: `${m}:${s}`,
+          moves: this.moves,
+          bestCombo: this.bestCombo,
+          accuracy,
+        });
+      }, 600);
+    });
+  },
+
+  restart() {
+    this.startNewGame();
+  },
+
+  showRules() {
+    alert(`📖 قواعد اللعبة:
+
+• اضغط على بطاقتين لكشفهما.
+• إذا تطابق الفعل مع تصنيفه الصرفي — بقيا مكشوفَين وكُشفت قطعة من الصورة المخفية!
+• إذا لم يتطابقا — انقلبتا للخلف وخسرت 10 نقاط.
+• أكمل جميع الأزواج الثمانية لكشف الصورة كاملة والفوز.
+
+🏆 نظام النقاط:
+• كل تطابق صحيح = +100 نقطة + مكافأة السرعة + مكافأة الـ combo.
+• كل combo متتالي يزيد مضاعف النقاط حتى x5.
+• الخطأ = -10 نقطة + إعادة ضبط الـ combo.`);
+  }
+};
+
+// ═══════════════════════════════════════════════
+// BOOT
+// ═══════════════════════════════════════════════
+window.addEventListener('load', () => GameEngine.init());
+</script>
+
+</body>
+</html>
