@@ -7,269 +7,372 @@
 <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;700;900&family=Amiri:wght@400;700&display=swap" rel="stylesheet">
 
 <style>
-:root {
-  --primary: #4834d4;
-  --secondary: #686de0;
-  --accent: #f0932b;
-  --success: #6ab04c;
-  --danger: #eb4d4b;
-  --bg: #f6f9fc;
-  --white: #ffffff;
-  --text: #2d3436;
-  --node-bg: #ffffff;
-  --node-border: #dcdde1;
-}
+  :root {
+    /* الألوان المستوحاة من اللعبة السحرية */
+    --gold: #f5c842;
+    --gold-light: #ffe98a;
+    --gold-dark: #c49a1a;
+    --purple: #4a1d7a;
+    --purple-mid: #6b2fa0;
+    --purple-light: #9b59d6;
+    --purple-dark: #2d0f4f;
+    --indigo: #1a1040;
+    --teal: #00d4aa;
+    --rose: #ff6b9d;
+    --bg: #0d0820;
+    --card-back: linear-gradient(135deg, #3d1270 0%, #6b2fa0 50%, #4a1d7a 100%);
+    --card-front: linear-gradient(135deg, #1a0a3a 0%, #2d0f5a 100%);
+    --text-light: #f0eef7;
+    --text-dim: rgba(255,255,240,0.7);
+    --node-bg: linear-gradient(135deg, #1a0a3a 0%, #2d0f5a 100%);
+    --node-border: rgba(245,200,66,0.5);
+    --node-active-glow: 0 0 20px rgba(245,200,66,0.7);
+    --connector-color: rgba(245,200,66,0.4);
+    --connector-active: #f5c842;
+    --shadow: 0 8px 32px rgba(0,0,0,0.5);
+  }
 
-* { box-sizing: border-box; margin: 0; padding: 0; }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
 
-body {
-  font-family: 'Tajawal', sans-serif;
-  background: var(--bg);
-  color: var(--text);
-  overflow-x: hidden;
-  padding: 20px;
-}
+  body {
+    font-family: 'Tajawal', sans-serif;
+    background: var(--bg);
+    color: var(--text-light);
+    overflow-x: hidden;
+    padding: 20px;
+    position: relative;
+  }
 
-.container {
-  max-width: 1200px;
-  margin: 0 auto;
-}
+  /* خلفية النجوم المتلألئة (مقتبسة من اللعبة) */
+  body::before {
+    content: '';
+    position: fixed;
+    top: 0; left: 0;
+    width: 100%; height: 100%;
+    pointer-events: none;
+    background-image: radial-gradient(2px 2px at 20px 30px, #f5c842, rgba(0,0,0,0)),
+                      radial-gradient(1px 1px at 80px 200px, #fff, rgba(0,0,0,0)),
+                      radial-gradient(3px 3px at 400px 500px, #9b59d6, rgba(0,0,0,0));
+    background-repeat: no-repeat;
+    background-size: 250px 250px, 300px 300px, 400px 400px;
+    opacity: 0.4;
+    animation: starsMove 60s linear infinite;
+    z-index: 0;
+  }
 
-header {
-  text-align: center;
-  margin-bottom: 40px;
-}
+  @keyframes starsMove {
+    0% { background-position: 0 0, 0 0, 0 0; }
+    100% { background-position: 500px 500px, 300px 200px, 700px 400px; }
+  }
 
-header h1 {
-  font-family: 'Amiri', serif;
-  font-size: 3rem;
-  color: var(--primary);
-  text-shadow: 2px 2px 4px rgba(0,0,0,0.05);
-}
+  .container {
+    max-width: 1200px;
+    margin: 0 auto;
+    position: relative;
+    z-index: 2;
+  }
 
-header p {
-  font-size: 1.2rem;
-  color: var(--secondary);
-  margin-top: 10px;
-}
+  header {
+    text-align: center;
+    margin-bottom: 40px;
+  }
 
-.game-layout {
-  display: grid;
-  grid-template-columns: 1fr 380px;
-  gap: 30px;
-}
+  header h1 {
+    font-family: 'Amiri', serif;
+    font-size: 3rem;
+    background: linear-gradient(135deg, var(--gold-light), var(--gold), var(--gold-dark));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    text-shadow: none;
+    filter: drop-shadow(0 0 12px rgba(245,200,66,0.5));
+  }
 
-@media (max-width: 1000px) {
-  .game-layout { grid-template-columns: 1fr; }
-}
+  header p {
+    font-size: 1.2rem;
+    color: var(--gold-light);
+    margin-top: 10px;
+    text-shadow: 0 0 5px rgba(0,0,0,0.5);
+  }
 
-.flowchart-wrapper {
-  background: var(--white);
-  border-radius: 30px;
-  box-shadow: 0 20px 40px rgba(0,0,0,0.05);
-  padding: 40px;
-  position: relative;
-  min-height: 850px;
-  overflow: hidden;
-}
+  .game-layout {
+    display: grid;
+    grid-template-columns: 1fr 380px;
+    gap: 30px;
+  }
 
-.svg-overlay {
-  position: absolute;
-  top: 0; left: 0;
-  width: 100%; height: 100%;
-  pointer-events: none;
-  z-index: 1;
-}
+  @media (max-width: 1000px) {
+    .game-layout { grid-template-columns: 1fr; }
+  }
 
-.connector {
-  fill: none;
-  stroke: #dfe6e9;
-  stroke-width: 4;
-  stroke-linecap: round;
-  transition: stroke 0.5s, stroke-width 0.5s;
-}
+  .flowchart-wrapper {
+    background: rgba(13,8,32,0.6);
+    backdrop-filter: blur(4px);
+    border-radius: 30px;
+    box-shadow: 0 20px 40px rgba(0,0,0,0.5), inset 0 0 0 1px rgba(245,200,66,0.2);
+    padding: 40px;
+    position: relative;
+    min-height: 850px;
+    overflow: hidden;
+    border: 1px solid rgba(245,200,66,0.3);
+  }
 
-.connector.active {
-  stroke: var(--accent);
-  stroke-width: 6;
-  filter: drop-shadow(0 0 5px rgba(240, 147, 43, 0.5));
-}
+  .svg-overlay {
+    position: absolute;
+    top: 0; left: 0;
+    width: 100%; height: 100%;
+    pointer-events: none;
+    z-index: 1;
+  }
 
-.nodes-container {
-  position: relative;
-  z-index: 2;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-}
+  .connector {
+    fill: none;
+    stroke: var(--connector-color);
+    stroke-width: 4;
+    stroke-linecap: round;
+    stroke-dasharray: 6;
+    transition: stroke 0.4s, stroke-width 0.3s, stroke-dasharray 0.3s;
+  }
 
-.node {
-  background: var(--node-bg);
-  border: 3px solid var(--node-border);
-  border-radius: 20px;
-  padding: 15px 25px;
-  font-weight: 700;
-  text-align: center;
-  transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-  cursor: default;
-  position: absolute;
-  min-width: 140px;
-  box-shadow: 0 5px 15px rgba(0,0,0,0.02);
-}
+  .connector.active {
+    stroke: var(--connector-active);
+    stroke-width: 6;
+    stroke-dasharray: none;
+    filter: drop-shadow(0 0 8px rgba(245,200,66,0.8));
+  }
 
-.node.active {
-  border-color: var(--accent);
-  transform: scale(1.1);
-  box-shadow: 0 10px 25px rgba(240, 147, 43, 0.2);
-  z-index: 10;
-}
+  .nodes-container {
+    position: relative;
+    z-index: 2;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
 
-.node.done {
-  border-color: var(--primary);
-  background: #f0f3ff;
-}
+  .node {
+    background: var(--node-bg);
+    border: 2px solid var(--node-border);
+    border-radius: 24px;
+    padding: 12px 20px;
+    font-weight: 700;
+    text-align: center;
+    transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    cursor: default;
+    position: absolute;
+    min-width: 150px;
+    box-shadow: 0 8px 20px rgba(0,0,0,0.4);
+    backdrop-filter: blur(4px);
+    background: rgba(26,10,58,0.9);
+  }
 
-.node-title { display: block; font-size: 1rem; }
-.node-sub { display: block; font-size: 0.75rem; opacity: 0.7; margin-top: 4px; }
+  .node.active {
+    border-color: var(--gold);
+    transform: scale(1.08);
+    box-shadow: var(--node-active-glow);
+    z-index: 10;
+    background: rgba(75,29,122,0.9);
+    border-width: 3px;
+  }
 
-/* Node Positions Based on New Flowchart */
-#n-root { top: 20px; left: 50%; transform: translateX(-50%); }
-#n-q1 { top: 140px; left: 50%; transform: translateX(-50%); }
+  .node.done {
+    border-color: var(--teal);
+    background: rgba(0,212,170,0.15);
+    backdrop-filter: blur(4px);
+  }
 
-/* Left Side (Muttal) */
-#n-q-ajwaf { top: 300px; left: 25%; transform: translateX(-50%); }
-#n-ajwaf { top: 560px; left: 10%; transform: translateX(-50%); }
-#n-q-mithal { top: 460px; left: 35%; transform: translateX(-50%); }
-#n-mithal { top: 650px; left: 25%; transform: translateX(-50%); }
-#n-naqis { top: 650px; left: 45%; transform: translateX(-50%); }
+  .node-title { 
+    display: block; 
+    font-size: 1rem; 
+    font-weight: 800;
+    color: var(--gold-light);
+  }
+  .node-sub { 
+    display: block; 
+    font-size: 0.7rem; 
+    opacity: 0.8; 
+    margin-top: 4px;
+    color: var(--text-dim);
+  }
 
-/* Right Side (Sahih) */
-#n-q-mahmouz { top: 300px; left: 75%; transform: translateX(-50%); }
-#n-mahmouz { top: 560px; left: 90%; transform: translateX(-50%); }
-#n-q-mudaaf { top: 460px; left: 65%; transform: translateX(-50%); }
-#n-mudaaf { top: 650px; left: 55%; transform: translateX(-50%); }
-#n-salim { top: 650px; left: 75%; transform: translateX(-50%); }
+  /* Node Positions Based on New Flowchart */
+  #n-root { top: 20px; left: 50%; transform: translateX(-50%); }
+  #n-q1 { top: 140px; left: 50%; transform: translateX(-50%); }
 
-.genie-pro {
-  position: absolute;
-  width: 200px;
-  height: 300px;
-  z-index: 100;
-  pointer-events: none;
-  transition: all 0.8s cubic-bezier(0.45, 0.05, 0.55, 0.95);
-  display: flex;
-  justify-content: center;
-  align-items: center;
-}
+  /* Left Side (Muttal) */
+  #n-q-ajwaf { top: 300px; left: 25%; transform: translateX(-50%); }
+  #n-ajwaf { top: 560px; left: 10%; transform: translateX(-50%); }
+  #n-q-mithal { top: 460px; left: 35%; transform: translateX(-50%); }
+  #n-mithal { top: 650px; left: 25%; transform: translateX(-50%); }
+  #n-naqis { top: 650px; left: 45%; transform: translateX(-50%); }
 
-.genie-pro img {
-  width: 100%;
-  height: 100%;
-  object-fit: contain;
-  animation: float 3s ease-in-out infinite;
-  filter: drop-shadow(0 10px 20px rgba(0,0,0,0.15));
-}
+  /* Right Side (Sahih) */
+  #n-q-mahmouz { top: 300px; left: 75%; transform: translateX(-50%); }
+  #n-mahmouz { top: 560px; left: 90%; transform: translateX(-50%); }
+  #n-q-mudaaf { top: 460px; left: 65%; transform: translateX(-50%); }
+  #n-mudaaf { top: 650px; left: 55%; transform: translateX(-50%); }
+  #n-salim { top: 650px; left: 75%; transform: translateX(-50%); }
 
-@keyframes float {
-  0%, 100% { transform: translateY(0) rotate(0deg); }
-  50% { transform: translateY(-20px) rotate(1deg); }
-}
+  /* الملاك المتجول */
+  .genie-pro {
+    position: absolute;
+    width: 200px;
+    height: 200px;
+    z-index: 100;
+    pointer-events: none;
+    transition: all 0.8s cubic-bezier(0.45, 0.05, 0.55, 0.95);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    filter: drop-shadow(0 0 20px rgba(245,200,66,0.6));
+  }
 
-.side-panel {
-  display: flex;
-  flex-direction: column;
-  gap: 20px;
-}
+  .genie-pro img {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+    animation: float 3s ease-in-out infinite;
+    filter: drop-shadow(0 8px 20px rgba(0,0,0,0.4));
+  }
 
-.card {
-  background: var(--white);
-  border-radius: 25px;
-  padding: 30px;
-  box-shadow: 0 15px 35px rgba(0,0,0,0.05);
-}
+  @keyframes float {
+    0%, 100% { transform: translateY(0) rotate(0deg); }
+    50% { transform: translateY(-18px) rotate(2deg); }
+  }
 
-.word-grid {
-  display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  gap: 12px;
-  margin: 20px 0;
-}
+  /* اللوحة الجانبية */
+  .side-panel {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+  }
 
-.word-item {
-  background: #f1f2f6;
-  padding: 12px;
-  border-radius: 15px;
-  text-align: center;
-  font-weight: 700;
-  font-family: 'Amiri', serif;
-  font-size: 1.2rem;
-  transition: 0.3s;
-}
+  .card {
+    background: rgba(26,10,58,0.8);
+    backdrop-filter: blur(12px);
+    border-radius: 28px;
+    padding: 28px;
+    box-shadow: 0 15px 35px rgba(0,0,0,0.3), inset 0 1px 0 rgba(245,200,66,0.2);
+    border: 1px solid rgba(245,200,66,0.3);
+  }
 
-.word-item.eliminated {
-  opacity: 0.2;
-  transform: scale(0.9);
-  filter: grayscale(1);
-}
+  .word-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 12px;
+    margin: 20px 0;
+  }
 
-.question-box {
-  text-align: center;
-}
+  .word-item {
+    background: rgba(107,47,160,0.3);
+    backdrop-filter: blur(4px);
+    padding: 12px;
+    border-radius: 18px;
+    text-align: center;
+    font-weight: 700;
+    font-family: 'Amiri', serif;
+    font-size: 1.2rem;
+    transition: 0.3s;
+    border: 1px solid rgba(245,200,66,0.4);
+    color: var(--gold-light);
+  }
 
-.question-box h2 {
-  font-size: 1.4rem;
-  margin-bottom: 25px;
-  line-height: 1.5;
-}
+  .word-item.eliminated {
+    opacity: 0.2;
+    transform: scale(0.92);
+    filter: grayscale(0.6);
+    background: rgba(0,0,0,0.5);
+    border-color: rgba(255,255,255,0.1);
+  }
 
-.btn-group {
-  display: flex;
-  gap: 15px;
-}
+  .question-box {
+    text-align: center;
+  }
 
-.btn {
-  flex: 1;
-  padding: 15px;
-  border: none;
-  border-radius: 18px;
-  font-family: 'Tajawal', sans-serif;
-  font-weight: 700;
-  font-size: 1.1rem;
-  cursor: pointer;
-  transition: 0.3s;
-}
+  .question-box h2 {
+    font-size: 1.5rem;
+    margin-bottom: 25px;
+    line-height: 1.5;
+    color: var(--gold);
+    font-weight: 700;
+  }
 
-.btn-yes { background: var(--success); color: white; }
-.btn-no { background: var(--danger); color: white; }
-.btn-primary { background: var(--primary); color: white; width: 100%; }
+  .btn-group {
+    display: flex;
+    gap: 15px;
+  }
 
-.btn:hover { transform: translateY(-3px); box-shadow: 0 5px 15px rgba(0,0,0,0.1); }
-.btn:active { transform: scale(0.95); }
+  .btn {
+    flex: 1;
+    padding: 14px;
+    border: none;
+    border-radius: 50px;
+    font-family: 'Tajawal', sans-serif;
+    font-weight: 800;
+    font-size: 1.1rem;
+    cursor: pointer;
+    transition: 0.25s ease;
+    letter-spacing: 0.5px;
+  }
 
-.hidden { display: none; }
+  .btn-yes { 
+    background: linear-gradient(135deg, var(--teal), #00997a); 
+    color: white;
+    box-shadow: 0 4px 15px rgba(0,212,170,0.3);
+  }
+  .btn-no { 
+    background: linear-gradient(135deg, var(--rose), #cc4477); 
+    color: white;
+    box-shadow: 0 4px 15px rgba(255,107,157,0.3);
+  }
+  .btn-primary { 
+    background: linear-gradient(135deg, var(--gold-dark), var(--gold)); 
+    color: var(--purple-dark);
+    font-weight: 900;
+    width: 100%;
+    box-shadow: 0 6px 20px rgba(245,200,66,0.4);
+  }
 
-.result-view {
-  text-align: center;
-  animation: zoomIn 0.5s ease;
-}
+  .btn:hover { 
+    transform: translateY(-3px); 
+    filter: brightness(1.05);
+    box-shadow: 0 10px 25px rgba(0,0,0,0.3);
+  }
+  .btn:active { transform: scale(0.96); }
 
-@keyframes zoomIn {
-  from { opacity: 0; transform: scale(0.8); }
-  to { opacity: 1; transform: scale(1); }
-}
+  .hidden { display: none; }
 
-.result-word {
-  font-family: 'Amiri', serif;
-  font-size: 3.5rem;
-  color: var(--accent);
-  margin: 10px 0;
-}
+  .result-view {
+    text-align: center;
+    animation: zoomIn 0.5s ease;
+  }
 
-.result-type {
-  font-size: 1.2rem;
-  color: var(--primary);
-  font-weight: 700;
-}
+  @keyframes zoomIn {
+    from { opacity: 0; transform: scale(0.8); }
+    to { opacity: 1; transform: scale(1); }
+  }
+
+  .result-word {
+    font-family: 'Amiri', serif;
+    font-size: 3.5rem;
+    color: var(--gold);
+    margin: 10px 0;
+    text-shadow: 0 0 12px rgba(245,200,66,0.6);
+  }
+
+  .result-type {
+    font-size: 1.3rem;
+    color: var(--teal);
+    font-weight: 700;
+  }
+
+  /* زينة إضافية */
+  .flowchart-wrapper::after {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background: radial-gradient(circle at 20% 30%, rgba(245,200,66,0.05) 0%, transparent 60%);
+    pointer-events: none;
+  }
 </style>
 </head>
 <body>
@@ -310,8 +413,8 @@ header p {
       <div class="card" id="welcome-card">
         <h3>صندوق الكلمات</h3>
         <div class="word-grid" id="wordGrid"></div>
-        <p style="margin-bottom: 20px; font-size: 0.9rem; color: #636e72;">اختر فعلاً واحداً في ذهنك، وسأقوم بتصنيفه باستخدام الخوارزمية الجديدة!</p>
-        <button class="btn btn-primary" onclick="startGame()">ابدأ التحدي</button>
+        <p style="margin-bottom: 20px; font-size: 0.9rem; color: #dddddd;">اختر فعلاً واحداً في ذهنك، وسأقوم بتصنيفه باستخدام الخوارزمية الجديدة!</p>
+        <button class="btn btn-primary" onclick="startGame()">✨ ابدأ التحدي ✨</button>
       </div>
       <div class="card hidden" id="game-card">
         <div class="question-box">
@@ -324,11 +427,11 @@ header p {
       </div>
       <div class="card hidden" id="result-card">
         <div class="result-view">
-          <span style="font-size: 3rem;">✨</span>
+          <span style="font-size: 3rem;">🏆</span>
           <h3>لقد وجدتها!</h3>
           <div class="result-word" id="resWord">...</div>
           <div class="result-type" id="resType">...</div>
-          <button class="btn btn-primary" style="margin-top: 30px;" onclick="resetGame()">العب مرة أخرى</button>
+          <button class="btn btn-primary" style="margin-top: 30px;" onclick="resetGame()">🔮 العب مرة أخرى</button>
         </div>
       </div>
     </div>
@@ -361,6 +464,9 @@ function init() {
   grid.innerHTML = VERBS.map(v => `<div class="word-item" id="chip-${v.word}">${v.word}</div>`).join('');
   drawConnectors();
   moveGenie('n-root');
+  // إصلاح الصورة الاحتياطية إذا لم تظهر genie.png
+  const genieImg = document.getElementById('genieImg');
+  genieImg.onerror = () => { genieImg.src = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ccircle cx='50' cy='50' r='45' fill='%23f5c842'/%3E%3Ctext x='50' y='70' text-anchor='middle' font-size='50' fill='%234a1d7a'%3E👼%3C/text%3E%3C/svg%3E"; };
 }
 
 function drawConnectors() {
@@ -370,6 +476,7 @@ function drawConnectors() {
   CONNECTIONS.forEach(([fromId, toId]) => {
     const from = document.getElementById(fromId);
     const to = document.getElementById(toId);
+    if (!from || !to) return;
     const fRect = from.getBoundingClientRect();
     const tRect = to.getBoundingClientRect();
     const x1 = fRect.left + fRect.width/2 - pRect.left;
@@ -387,10 +494,11 @@ function drawConnectors() {
 function moveGenie(nodeId) {
   const genie = document.getElementById('genie');
   const node = document.getElementById(nodeId);
+  if (!node) return;
   const nRect = node.getBoundingClientRect();
   const pRect = document.getElementById('flowchart').getBoundingClientRect();
-  genie.style.left = `${nRect.left + nRect.width/2 - pRect.left - 100}px`;
-  genie.style.top = `${nRect.top - pRect.top - 260}px`;
+  genie.style.left = `${nRect.left + nRect.width/2 - pRect.left - 90}px`;
+  genie.style.top = `${nRect.top - pRect.top - 220}px`;
   document.querySelectorAll('.node').forEach(n => n.classList.remove('active'));
   node.classList.add('active');
 }
@@ -404,8 +512,15 @@ function activatePath(fromId, toId) {
 function startGame() {
   document.getElementById('welcome-card').classList.add('hidden');
   document.getElementById('game-card').classList.remove('hidden');
+  document.getElementById('result-card').classList.add('hidden');
   currentStep = 'q1';
+  // reset highlighted path and nodes active/done state except root
+  document.querySelectorAll('.connector').forEach(c => c.classList.remove('active'));
+  document.querySelectorAll('.node').forEach(n => n.classList.remove('active', 'done'));
+  document.getElementById('n-root').classList.add('done');
   activatePath('n-root', 'n-q1');
+  // إعادة إظهار كل الكلمات
+  document.querySelectorAll('.word-item').forEach(c => c.classList.remove('eliminated'));
   updateUI();
 }
 
@@ -418,9 +533,13 @@ function updateUI() {
     'q-mahmouz': 'هل يحتوي الفعل على همزة؟',
     'q-mudaaf': 'هل يحتوي الفعل على تضعيف (شدّة)؟'
   };
-  qText.innerText = steps[currentStep];
+  qText.innerText = steps[currentStep] || 'سؤال؟';
   const nodeMap = { 'q1': 'n-q1', 'q-ajwaf': 'n-q-ajwaf', 'q-mithal': 'n-q-mithal', 'q-mahmouz': 'n-q-mahmouz', 'q-mudaaf': 'n-q-mudaaf' };
-  moveGenie(nodeMap[currentStep]);
+  if (nodeMap[currentStep]) moveGenie(nodeMap[currentStep]);
+}
+
+function eliminate(fn) {
+  VERBS.forEach(v => { if (fn(v)) document.getElementById('chip-' + v.word).classList.add('eliminated'); });
 }
 
 function handleAnswer(isYes) {
@@ -434,24 +553,24 @@ function handleAnswer(isYes) {
       activatePath('n-q1', 'n-q-mahmouz');
       eliminate(v => v.hasIlla);
     }
-  } else if (currentStep === 'q-ajwaf') {
-    if (isYes) { activatePath('n-q-ajwaf', 'n-ajwaf'); showResult('قال'); }
+  } 
+  else if (currentStep === 'q-ajwaf') {
+    if (isYes) { activatePath('n-q-ajwaf', 'n-ajwaf'); showResult('قال'); return; }
     else { currentStep = 'q-mithal'; activatePath('n-q-ajwaf', 'n-q-mithal'); }
-  } else if (currentStep === 'q-mithal') {
-    if (isYes) { activatePath('n-q-mithal', 'n-mithal'); showResult('وعد'); }
-    else { activatePath('n-q-mithal', 'n-naqis'); showResult('رمى'); }
-  } else if (currentStep === 'q-mahmouz') {
-    if (isYes) { activatePath('n-q-mahmouz', 'n-mahmouz'); showResult('أكل'); }
+  } 
+  else if (currentStep === 'q-mithal') {
+    if (isYes) { activatePath('n-q-mithal', 'n-mithal'); showResult('وعد'); return; }
+    else { activatePath('n-q-mithal', 'n-naqis'); showResult('رمى'); return; }
+  } 
+  else if (currentStep === 'q-mahmouz') {
+    if (isYes) { activatePath('n-q-mahmouz', 'n-mahmouz'); showResult('أكل'); return; }
     else { currentStep = 'q-mudaaf'; activatePath('n-q-mahmouz', 'n-q-mudaaf'); }
-  } else if (currentStep === 'q-mudaaf') {
-    if (isYes) { activatePath('n-q-mudaaf', 'n-mudaaf'); showResult('مدّ'); }
-    else { activatePath('n-q-mudaaf', 'n-salim'); showResult('كتب'); }
+  } 
+  else if (currentStep === 'q-mudaaf') {
+    if (isYes) { activatePath('n-q-mudaaf', 'n-mudaaf'); showResult('مدّ'); return; }
+    else { activatePath('n-q-mudaaf', 'n-salim'); showResult('كتب'); return; }
   }
   updateUI();
-}
-
-function eliminate(fn) {
-  VERBS.forEach(v => { if (fn(v)) document.getElementById('chip-' + v.word).classList.add('eliminated'); });
 }
 
 function showResult(wordName) {
@@ -462,7 +581,11 @@ function showResult(wordName) {
     document.getElementById('game-card').classList.add('hidden');
     document.getElementById('result-card').classList.remove('hidden');
     document.getElementById('resWord').innerText = verb.word;
-    document.getElementById('resType').innerText = 'التصنيف: ' + verb.type;
+    document.getElementById('resType').innerHTML = '🔮 التصنيف: ' + verb.type;
+    // تأثير احتفالي بسيط
+    const genieImg = document.getElementById('genieImg');
+    genieImg.style.animation = 'none';
+    setTimeout(() => genieImg.style.animation = 'float 3s ease-in-out infinite', 10);
   }, 600);
 }
 
@@ -474,10 +597,14 @@ function resetGame() {
   document.querySelectorAll('.node').forEach(n => { n.classList.remove('done'); n.classList.remove('active'); });
   document.getElementById('n-root').classList.add('done');
   moveGenie('n-root');
+  // إعادة رسم الوصلات تحسباً لتغيير الحجم
+  setTimeout(drawConnectors, 100);
 }
 
-window.onload = init;
-window.onresize = drawConnectors;
+window.onload = () => {
+  init();
+  window.addEventListener('resize', () => drawConnectors());
+};
 </script>
 </body>
 </html>
