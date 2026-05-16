@@ -72,6 +72,50 @@
     z-index: 2;
   }
 
+  /* ──────────── ستايل الروابط الخمسة (مضاف بدون تغيير) ──────────── */
+  .nav-links {
+    position: relative;
+    z-index: 200;
+    display: flex;
+    gap: 20px;
+    align-items: center;
+    justify-content: center;
+    padding: 8px 16px;
+    background: rgba(0, 0, 0, 0.6);
+    border-radius: 60px;
+    backdrop-filter: blur(12px);
+    width: fit-content;
+    margin: 0 auto 20px auto;
+    border: 1px solid rgba(245, 200, 66, 0.3);
+    box-shadow: 0 2px 10px rgba(0,0,0,0.3);
+  }
+  .nav-link {
+    font-family: 'Tajawal', sans-serif;
+    font-size: 16px;
+    font-weight: 600;
+    color: #ffffff;
+    text-decoration: none;
+    transition: all 0.2s ease;
+    background: transparent;
+    padding: 6px 14px;
+    border-radius: 40px;
+    letter-spacing: 0.3px;
+    backdrop-filter: blur(4px);
+    border: 1px solid rgba(245, 200, 66, 0.3);
+  }
+  .nav-link:hover {
+    color: var(--gold);
+    background: rgba(245, 200, 66, 0.15);
+    border-color: var(--gold);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+  }
+  @media (max-width: 720px) {
+    .nav-links { gap: 10px; padding: 6px 12px; }
+    .nav-link { font-size: 13px; padding: 4px 10px; }
+  }
+  /* نهاية الإضافة */
+
   header {
     text-align: center;
     margin-bottom: 40px;
@@ -378,6 +422,15 @@
 <body>
 
 <div class="container">
+  <!-- ─── الهيدر (الروابط الخمسة) مضاف هنا ─── -->
+  <div class="nav-links">
+    <a href="https://moo-m.github.io/Steam/" class="nav-link" target="_blank" rel="noopener noreferrer">⌂</a>
+    <a href="https://moo-m.github.io/Steam/3D.html" class="nav-link" target="_blank" rel="noopener noreferrer">3D</a>
+    <a href="https://moo-m.github.io/Steam/angel.html" class="nav-link" target="_blank" rel="noopener noreferrer">🪽</a>
+    <a href="https://moo-m.github.io/Steam/memoryGame.html" class="nav-link" target="_blank" rel="noopener noreferrer">🧩</a>
+    <a href="https://moo-m.github.io/Steam/wordCatcher.html" class="nav-link" target="_blank" rel="noopener noreferrer">🪝</a>
+  </div>
+
   <header>
     <h1>خوارزمية تصنيف الأفعال</h1>
     <p>الملاك العارف يكتشف ما يدور في ذهنك!</p>
