@@ -594,7 +594,7 @@ transition: width 0.5s ease;
   </div>
 
   <div class="reveal-wrapper">
-    <img id="hidden-img" src="genie.png" alt="hidden" crossorigin="anonymous" />
+    <img id="hidden-img" src="1.jpeg" alt="hidden" crossorigin="anonymous" />
     <canvas id="reveal-canvas"></canvas>
     <div class="reveal-placeholder" id="reveal-placeholder">
       <span class="ph-icon">🌙</span>
@@ -1046,6 +1046,7 @@ const GameEngine = {
   timerInterval: null,
   elapsedSeconds: 0,
   isActive: false,
+  isPeeking: false,
   TOTAL_PAIRS: 8,
 
   init() {
@@ -1088,6 +1089,7 @@ const GameEngine = {
     this.totalAttempts = 0;
     this.elapsedSeconds = 0;
     this.isActive = true;
+    this.isPeeking = false;
     document.getElementById('win-overlay').classList.remove('show');
     document.getElementById('hint-panel').classList.remove('visible');
     document.getElementById('reveal-placeholder').style.display = 'flex';
@@ -1124,10 +1126,27 @@ const GameEngine = {
     board.innerHTML = '';
     MatchManager.reset();
     this.cards.forEach(card => board.appendChild(card.createElement()));
+
+    // Peek: flip all cards open, then flip back after 1.5s
+    this.isPeeking = true;
+    // Stagger the opening slightly for a nice wave effect
+    this.cards.forEach((card, i) => {
+      setTimeout(() => card.flip(), i * 40);
+    });
+    const totalOpen = (this.cards.length - 1) * 40 + 1500;
+    setTimeout(() => {
+      this.cards.forEach((card, i) => {
+        setTimeout(() => {
+          if (!card.isMatched) card.unflip();
+        }, i * 30);
+      });
+      setTimeout(() => { this.isPeeking = false; }, (this.cards.length - 1) * 30 + 600);
+    }, totalOpen);
   },
 
   handleCardClick(card) {
     if (!this.isActive) return;
+    if (this.isPeeking) return;
     if (card.isFlipped || card.isMatched) return;
     if (MatchManager.isChecking) return;
     if (MatchManager.flippedCards.length >= 2) return;
