@@ -378,13 +378,10 @@
 
   <!-- CENTER TITLE - UNCHANGED -->
   <div id="title-block">
-    <h1>خوارزمية تصنيف الأفعال (الصحيح والمعتل)</h1>
-    <p>انقر على أي عقدة لاستكشافها • اسحب للتدوير</p>
-  </div>
+    <h1>خوارزمية تصنيف الأفعال (الصحيح والمعتل)</h1>  </div>
 
   <!-- RIGHT SIDE: ORIGINAL BUTTONS (unchanged) -->
   <div class="hud-controls" style="flex-direction:row-reverse">
-    <button class="ctrl-btn" id="btn-dark" title="تبديل المظهر" onclick="toggleDark()">🌙</button>
     <button class="ctrl-btn" id="btn-sound" title="الصوت" onclick="toggleSound()">
       <div class="sound-wave" id="sound-icon">
         <div class="sw-bar"></div><div class="sw-bar"></div><div class="sw-bar"></div><div class="sw-bar"></div>
@@ -815,7 +812,6 @@ const nodeData = {
 //  UI FUNCTIONS
 // ═══════════════════════════════════════════════════════
 let soundOn = true;
-let darkMode = false;
 let currentNode = null;
 
 function showInfo(key) {
@@ -900,11 +896,6 @@ function toggleSound() {
   document.getElementById('sound-icon').classList.toggle('sound-off', !soundOn);
 }
 
-function toggleDark() {
-  darkMode = !darkMode;
-  document.body.classList.toggle('light-mode', darkMode);
-  document.getElementById('btn-dark').textContent = darkMode ? '☀️' : '🌙';
-}
 
 function toggleFullscreen() {
   if(!document.fullscreenElement) {
