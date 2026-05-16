@@ -419,6 +419,75 @@ body::before {
   #verb-input { font-size: 20px; padding: 14px 14px; }
 }
 </style>
+<script>
+// ════════════════════════════════════════
+// AUDIO EFFECTS SYSTEM (Web Audio API)
+// ════════════════════════════════════════
+const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+
+let alarmOscillator = null;
+let alarmGain = null;
+let alarmLevel = 0;
+
+function startAlarmSound() {
+  if (alarmOscillator) {
+    stopAlarmSound();
+  }
+  alarmOscillator = audioContext.createOscillator();
+  alarmGain = audioContext.createGain();
+
+  alarmOscillator.type = 'sine';
+  alarmOscillator.frequency.setValueAtTime(440, audioContext.currentTime); // A4 note
+  alarmGain.gain.setValueAtTime(0, audioContext.currentTime); // Start silent
+
+  alarmOscillator.connect(alarmGain);
+  alarmGain.connect(audioContext.destination);
+  alarmOscillator.start();
+}
+
+function updateAlarmSound(level) {
+  alarmLevel = level;
+  if (alarmGain) {
+    // Increase gain based on level (0-4)
+    const targetGain = Math.min(level / 4, 1) * 0.1; // Max volume 0.1 for subtle alarm
+    alarmGain.gain.linearRampToValueAtTime(targetGain, audioContext.currentTime + 0.1);
+  }
+}
+
+function stopAlarmSound() {
+  if (alarmOscillator) {
+    alarmGain.gain.linearRampToValueAtTime(0, audioContext.currentTime + 0.05); // Fade out quickly
+    alarmOscillator.stop(audioContext.currentTime + 0.05);
+    alarmOscillator = null;
+    alarmGain = null;
+    alarmLevel = 0;
+  }
+}
+
+function playGlitchSound() {
+  const duration = 0.4; // seconds
+  const now = audioContext.currentTime;
+
+  const bufferSize = audioContext.sampleRate * duration;
+  const buffer = audioContext.createBuffer(1, bufferSize, audioContext.sampleRate);
+  const data = buffer.getChannelData(0);
+
+  for (let i = 0; i < bufferSize; i++) {
+    data[i] = Math.random() * 2 - 1; // White noise
+  }
+
+  const source = audioContext.createBufferSource();
+  source.buffer = buffer;
+
+  const gainNode = audioContext.createGain();
+  gainNode.gain.setValueAtTime(0.5, now); // Initial volume
+  gainNode.gain.exponentialRampToValueAtTime(0.001, now + duration); // Fade out
+
+  source.connect(gainNode);
+  gainNode.connect(audioContext.destination);
+  source.start(now);
+}
+</script>
 </head>
 <body>
 
@@ -881,11 +950,16 @@ document.addEventListener('DOMContentLoaded', () => {
   const btn   = document.getElementById('check-btn');
   const appEl = document.getElementById('app');
 
+  let secretCodeInput = '';
+  const SECRET_CODE = '1234';
+
   function handleClassification() {
     const val = input.value.trim();
-    if (val === '1234') {
+    if (val === SECRET_CODE) {
       // 🧨 تفعيل تأثير التحطم البطيء
+      playGlitchSound();
       triggerSlowGlitch(appEl);
+      stopAlarmSound();
       return;
     }
     if (!val) {
@@ -897,8 +971,30 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   btn.addEventListener('click', handleClassification);
-  input.addEventListener('keydown', (e) => { if (e.key === 'Enter') handleClassification(); });
-  input.addEventListener('input', () => { if (!input.value.trim()) clearResult(); });
+  input.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') {
+      handleClassification();
+    } else if (e.key >= '0' && e.key <= '9') {
+      secretCodeInput += e.key;
+      if (SECRET_CODE.startsWith(secretCodeInput)) {
+        startAlarmSound();
+        updateAlarmSound(secretCodeInput.length);
+      } else {
+        secretCodeInput = '';
+        stopAlarmSound();
+      }
+    } else {
+      secretCodeInput = '';
+      stopAlarmSound();
+    }
+  });
+  input.addEventListener('input', () => {
+    if (!input.value.trim()) {
+      clearResult();
+      secretCodeInput = '';
+      stopAlarmSound();
+    }
+  });
 });
 
 // helper for rounded rect
