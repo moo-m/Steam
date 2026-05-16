@@ -74,6 +74,50 @@
   }
   .ctrl-btn:hover { background: rgba(201,162,39,0.2); transform: scale(1.08); box-shadow: 0 0 14px rgba(201,162,39,0.4); }
 
+  /* --- NEW 5 NAVIGATION LINKS STYLES (HEADER ONLY) --- */
+  .nav-links {
+    display: flex;
+    gap: 20px;
+    align-items: center;
+    margin-right: 10px;
+  }
+  .nav-link {
+    font-family: 'Cairo', sans-serif;
+    font-size: 14px;
+    font-weight: 500;
+    color: rgba(255, 215, 0, 0.85);
+    text-decoration: none;
+    transition: all 0.2s ease;
+    background: transparent;
+    padding: 6px 12px;
+    border-radius: 32px;
+    letter-spacing: 0.3px;
+    backdrop-filter: blur(4px);
+    border: 1px solid rgba(201,162,39,0.2);
+  }
+  .nav-link:hover {
+    color: #ffd700;
+    background: rgba(201,162,39,0.15);
+    border-color: rgba(201,162,39,0.6);
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+  }
+  /* responsive: on small screens reduce gap and font */
+  @media (max-width: 720px) {
+    .nav-links { gap: 8px; }
+    .nav-link { font-size: 11px; padding: 4px 8px; }
+  }
+  /* light mode compatibility */
+  body.light-mode .nav-link {
+    color: #8a6800;
+    border-color: rgba(138,104,0,0.3);
+  }
+  body.light-mode .nav-link:hover {
+    background: rgba(138,104,0,0.1);
+    color: #5e4700;
+    border-color: #c9a227;
+  }
+
   /* ─── FLOWCHART 2D OVERLAY ─── */
   #flowchart-overlay {
     position: fixed; inset: 0;
@@ -319,8 +363,26 @@
 <!-- PARTICLES -->
 <canvas id="particles"></canvas>
 
-<!-- TOP BAR -->
+<!-- TOP BAR - MODIFIED: Added 5 navigation links on the left side, keeping everything else identical -->
 <div id="top-bar">
+  <!-- LEFT SIDE: 5 Navigation links (new) perfectly integrated -->
+  <div class="hud-controls" style="width:auto; justify-content:flex-start;">
+    <div class="nav-links">
+      <a href="https://moo-m.github.io/Steam/" class="nav-link" target="_blank" rel="noopener noreferrer">⌂</a>
+      <a href="https://moo-m.github.io/Steam/3D.html" class="nav-link" target="_blank" rel="noopener noreferrer">3D</a>
+      <a href="https://moo-m.github.io/Steam/angel.html" class="nav-link" target="_blank" rel="noopener noreferrer">🪽</a>
+      <a href="https://moo-m.github.io/Steam/memoryGame.html" class="nav-link" target="_blank" rel="noopener noreferrer">🧩</a>
+      <a href="https://moo-m.github.io/Steam/wordCatcher.html" class="nav-link" target="_blank" rel="noopener noreferrer">🪝</a>
+    </div>
+  </div>
+
+  <!-- CENTER TITLE - UNCHANGED -->
+  <div id="title-block">
+    <h1>خوارزمية تصنيف الأفعال (الصحيح والمعتل)</h1>
+    <p>انقر على أي عقدة لاستكشافها • اسحب للتدوير</p>
+  </div>
+
+  <!-- RIGHT SIDE: ORIGINAL BUTTONS (unchanged) -->
   <div class="hud-controls" style="flex-direction:row-reverse">
     <button class="ctrl-btn" id="btn-dark" title="تبديل المظهر" onclick="toggleDark()">🌙</button>
     <button class="ctrl-btn" id="btn-sound" title="الصوت" onclick="toggleSound()">
@@ -331,11 +393,6 @@
     <button class="ctrl-btn" title="ملء الشاشة" onclick="toggleFullscreen()">⛶</button>
     <button class="ctrl-btn" title="إعادة ضبط العرض" onclick="resetView()">⟳</button>
   </div>
-  <div id="title-block">
-    <h1>خوارزمية تصنيف الأفعال (الصحيح والمعتل)</h1>
-    <p>انقر على أي عقدة لاستكشافها • اسحب للتدوير</p>
-  </div>
-  <div class="hud-controls" style="width:180px; justify-content:flex-end;"></div>
 </div>
 
 <!-- FLOWCHART SVG OVERLAY -->
