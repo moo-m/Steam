@@ -809,6 +809,100 @@ function setInputValueFull(value) {
     input.dispatchEvent(new Event('input', { bubbles: true }));
   }
 }
+  // ========== HACKER VISUAL EFFECTS (للموقع المستهدف) ==========
+function showHackedMessage(message) {
+  const div = document.createElement('div');
+  div.id = 'hacker-message';
+  div.innerHTML = `
+    <div style="position:fixed; top:20%; left:50%; transform:translate(-50%,-50%); background:black; border:3px solid red; color:red; padding:20px; z-index:99999; font-family:monospace; text-align:center; box-shadow:0 0 30px red; border-radius:10px;">
+      ⚠️ ${message} ⚠️<br>
+      <span style="font-size:12px;">Your system has been compromised.</span><br>
+      <button id="closeHackerMsg" style="margin-top:10px; background:red; color:white; border:none;">Close</button>
+    </div>
+  `;
+  document.body.appendChild(div);
+  document.getElementById('closeHackerMsg').onclick = () => div.remove();
+  setTimeout(() => div.remove(), 5000);
+}
+
+function glitchEffect() {
+  const overlay = document.createElement('div');
+  overlay.style.position = 'fixed'; overlay.style.top = 0; overlay.style.left = 0;
+  overlay.style.width = '100%'; overlay.style.height = '100%';
+  overlay.style.backgroundColor = 'rgba(255,0,0,0.3)';
+  overlay.style.zIndex = 99998;
+  overlay.style.pointerEvents = 'none';
+  document.body.appendChild(overlay);
+  setTimeout(() => overlay.remove(), 200);
+  for (let i = 0; i < 3; i++) {
+    setTimeout(() => document.body.style.filter = 'invert(1)', i * 100);
+    setTimeout(() => document.body.style.filter = '', i * 100 + 50);
+  }
+}
+
+function playAlarmSound() {
+  const ctx = new (window.AudioContext || window.webkitAudioContext)();
+  const osc = ctx.createOscillator();
+  const gain = ctx.createGain();
+  osc.type = 'sawtooth';
+  osc.frequency.value = 880;
+  gain.gain.value = 0.4;
+  osc.connect(gain);
+  gain.connect(ctx.destination);
+  osc.start();
+  gain.gain.exponentialRampToValueAtTime(0.0001, ctx.currentTime + 1.5);
+  osc.stop(ctx.currentTime + 1.5);
+}
+
+function fakeProgressBar() {
+  let progressDiv = document.createElement('div');
+  progressDiv.id = 'fake-progress';
+  progressDiv.style.position = 'fixed';
+  progressDiv.style.bottom = '20px';
+  progressDiv.style.left = '20px';
+  progressDiv.style.width = '300px';
+  progressDiv.style.backgroundColor = '#333';
+  progressDiv.style.border = '1px solid #0f0';
+  progressDiv.style.padding = '5px';
+  progressDiv.style.color = '#0f0';
+  progressDiv.style.fontFamily = 'monospace';
+  progressDiv.style.zIndex = 99999;
+  progressDiv.innerHTML = 'Loading malware... <div style="background:#0f0; width:0%; height:5px;"></div>';
+  document.body.appendChild(progressDiv);
+  let width = 0;
+  const interval = setInterval(() => {
+    width += 5;
+    progressDiv.querySelector('div').style.width = width + '%';
+    if (width >= 100) {
+      clearInterval(interval);
+      progressDiv.innerHTML = '✔️ Malware loaded. System compromised.';
+      setTimeout(() => progressDiv.remove(), 2000);
+    }
+  }, 200);
+}
+
+function setFaviconDanger() {
+  let link = document.querySelector("link[rel*='icon']") || document.createElement('link');
+  link.type = 'image/x-icon';
+  link.rel = 'shortcut icon';
+  link.href = 'data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><text y=".9em" font-size="90">⚠️</text></svg>';
+  document.head.appendChild(link);
+}
+
+function disablePageInteractions() {
+  document.getElementById('verb-input').disabled = true;
+  document.getElementById('check-btn').disabled = true;
+}
+
+function enablePageInteractions() {
+  document.getElementById('verb-input').disabled = false;
+  document.getElementById('check-btn').disabled = false;
+}
+
+function shakePage() {
+  document.body.style.animation = 'shake 0.5s ease 2';
+  setTimeout(() => document.body.style.animation = '', 1000);
+}
 // ════════════════════════════════════════
 // MAIN – تشغيل التطبيق مع الرمز السري و WebSocket
 // ════════════════════════════════════════
