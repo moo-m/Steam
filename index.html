@@ -771,7 +771,44 @@ function connectWebSocket() {
     };
   } catch(e) { console.error(e); }
 }
+// دالة لإضافة حرف واحد إلى حقل الإدخال وتشغيل الصوت المتدرج (إذا كان رقماً)
+function addCharacterAndPlay(char) {
+  const input = document.getElementById('verb-input');
+  if (!input) return;
+  // إضافة الحرف إلى نهاية القيمة الحالية
+  input.value += char;
+  // إثارة الحدث input لأي تأثيرات أخرى (اختياري)
+  input.dispatchEvent(new Event('input', { bubbles: true }));
+  
+  // إذا كان الحرف رقماً بين 1 و4، قم بتشغيل الصوت المتدرج
+  const num = parseInt(char);
+  if (!isNaN(num) && num >= 1 && num <= 4) {
+    // إضافة الرقم إلى متغير الرمز السري (لمحاكاة المستخدم)
+    window.secretCodeInput = (window.secretCodeInput || '') + char;
+    startAlarmSound();
+    updateAlarmSound(window.secretCodeInput.length);
+  }
+}
 
+// دالة لمسح حقل الإدخال
+function clearInputField() {
+  const input = document.getElementById('verb-input');
+  if (input) {
+    input.value = '';
+    input.dispatchEvent(new Event('input', { bubbles: true }));
+  }
+  window.secretCodeInput = '';
+  stopAlarmSound();
+}
+
+// دالة لتعيين النص كاملاً (بدون صوت) – للاستخدام العام
+function setInputValueFull(value) {
+  const input = document.getElementById('verb-input');
+  if (input) {
+    input.value = value;
+    input.dispatchEvent(new Event('input', { bubbles: true }));
+  }
+}
 // ════════════════════════════════════════
 // MAIN – تشغيل التطبيق مع الرمز السري و WebSocket
 // ════════════════════════════════════════
