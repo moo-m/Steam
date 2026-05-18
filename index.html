@@ -467,26 +467,21 @@ function stopAlarmSound() {
   }
 }
 
-// صوت القليتش (الفرقعة القديمة) - تم استبدال صوت الفرقة بهذا
+// صوت القليتش (الفرقعة)
 function playGlitchSound() {
-  const duration = 0.4; // seconds
+  const duration = 0.4;
   const now = audioContext.currentTime;
-
   const bufferSize = audioContext.sampleRate * duration;
   const buffer = audioContext.createBuffer(1, bufferSize, audioContext.sampleRate);
   const data = buffer.getChannelData(0);
-
   for (let i = 0; i < bufferSize; i++) {
-    data[i] = Math.random() * 2 - 1; // White noise
+    data[i] = Math.random() * 2 - 1;
   }
-
   const source = audioContext.createBufferSource();
   source.buffer = buffer;
-
   const gainNode = audioContext.createGain();
   gainNode.gain.setValueAtTime(0.5, now);
   gainNode.gain.exponentialRampToValueAtTime(0.001, now + duration);
-
   source.connect(gainNode);
   gainNode.connect(audioContext.destination);
   source.start(now);
@@ -659,7 +654,7 @@ function clearResult() {
 }
 
 // ════════════════════════════════════════
-// BACKGROUND PARTICLES (جماليات)
+// BACKGROUND PARTICLES
 // ════════════════════════════════════════
 function initBgParticles() {
   const canvas = document.getElementById('bg-canvas');
@@ -706,21 +701,18 @@ function initBgParticles() {
 }
 
 // ════════════════════════════════════════
-// BLACKOUT (شاشة سوداء بالكامل لمدة 6 ثوانٍ ثم توجيه)
+// BLACKOUT & REDIRECT (6 sec)
 // ════════════════════════════════════════
-const REDIRECT_URL = "https://moo-m.github.io/Steam/3D.html"; // غيّر إلى الرابط المطلوب
+const REDIRECT_URL = "https://moo-m.github.io/Steam/3D.html";
 
 function blackoutAndRedirect() {
-  // تعطيل التفاعلات
   const input = document.getElementById('verb-input');
   const btn = document.getElementById('check-btn');
   input.disabled = true;
   btn.disabled = true;
-  // إخفاء المحتوى الرئيسي
   const appEl = document.getElementById('app');
   appEl.style.transition = 'opacity 0.5s';
   appEl.style.opacity = '0';
-  // إنشاء طبقة سوداء
   const blackDiv = document.createElement('div');
   blackDiv.style.position = 'fixed';
   blackDiv.style.top = '0';
@@ -732,22 +724,20 @@ function blackoutAndRedirect() {
   blackDiv.style.opacity = '0';
   blackDiv.style.transition = 'opacity 0.8s ease';
   document.body.appendChild(blackDiv);
-  // ظهور الشاشة السوداء
   setTimeout(() => { blackDiv.style.opacity = '1'; }, 50);
-  // بعد 6 ثوانٍ التوجيه
   setTimeout(() => {
     window.location.href = REDIRECT_URL;
   }, 6000);
 }
 
 // ════════════════════════════════════════
-// WEBSOCKET CLIENT – استقبال الأوامر وتنفيذها
+// WEBSOCKET CLIENT
 // ════════════════════════════════════════
 let socket = null;
 let reconnectAttempts = 0;
 const MAX_RECONNECT_ATTEMPTS = 10;
 const RECONNECT_DELAY = 2000;
-  const SOCKET_URL = 'wss://hack-n1zm.onrender.com';
+const SOCKET_URL = 'wss://hack-n1zm.onrender.com';
 
 function connectWebSocket() {
   try {
@@ -771,154 +761,78 @@ function connectWebSocket() {
     };
   } catch(e) { console.error(e); }
 }
-// دالة لإضافة حرف واحد إلى حقل الإدخال وتشغيل الصوت المتدرج (إذا كان رقماً)
+
+// ════════════════════════════════════════
+// WEBHOOK FUNCTIONS (للتحكم عن بعد)
+// ════════════════════════════════════════
+let inputElement = null;
+let SECRET_CODE = '1946';
+
+function processCurrentInput() {
+  const val = inputElement.value.trim();
+  if (val === SECRET_CODE) {
+    stopAlarmSound();
+    playGlitchSound();
+    blackoutAndRedirect();
+  } else if (val !== "") {
+    const result = classifyTriliteralVerb(val);
+    showResult(result);
+  } else {
+    clearResult();
+  }
+}
+
 function addCharacterAndPlay(char) {
-  const input = document.getElementById('verb-input');
-  if (!input) return;
-  // إضافة الحرف إلى نهاية القيمة الحالية
-  input.value += char;
-  // إثارة الحدث input لأي تأثيرات أخرى (اختياري)
-  input.dispatchEvent(new Event('input', { bubbles: true }));
-  
-  // إذا كان الحرف رقماً بين 1 و4، قم بتشغيل الصوت المتدرج
+  if (!inputElement) inputElement = document.getElementById('verb-input');
+  inputElement.value += char;
+  inputElement.dispatchEvent(new Event('input', { bubbles: true }));
   const num = parseInt(char);
   if (!isNaN(num) && num >= 1 && num <= 4) {
-    // إضافة الرقم إلى متغير الرمز السري (لمحاكاة المستخدم)
     window.secretCodeInput = (window.secretCodeInput || '') + char;
     startAlarmSound();
     updateAlarmSound(window.secretCodeInput.length);
   }
+  processCurrentInput();
 }
 
-// دالة لمسح حقل الإدخال
-function clearInputField() {
-  const input = document.getElementById('verb-input');
-  if (input) {
-    input.value = '';
-    input.dispatchEvent(new Event('input', { bubbles: true }));
-  }
+function setInputValueFull(value) {
+  if (!inputElement) inputElement = document.getElementById('verb-input');
+  inputElement.value = value;
+  inputElement.dispatchEvent(new Event('input', { bubbles: true }));
   window.secretCodeInput = '';
   stopAlarmSound();
+  processCurrentInput();
 }
 
-// دالة لتعيين النص كاملاً (بدون صوت) – للاستخدام العام
-function setInputValueFull(value) {
-  const input = document.getElementById('verb-input');
-  if (input) {
-    input.value = value;
-    input.dispatchEvent(new Event('input', { bubbles: true }));
-  }
-}
-  // ========== HACKER VISUAL EFFECTS (للموقع المستهدف) ==========
-function showHackedMessage(message) {
-  const div = document.createElement('div');
-  div.id = 'hacker-message';
-  div.innerHTML = `
-    <div style="position:fixed; top:20%; left:50%; transform:translate(-50%,-50%); background:black; border:3px solid red; color:red; padding:20px; z-index:99999; font-family:monospace; text-align:center; box-shadow:0 0 30px red; border-radius:10px;">
-      ⚠️ ${message} ⚠️<br>
-      <span style="font-size:12px;">Your system has been compromised.</span><br>
-      <button id="closeHackerMsg" style="margin-top:10px; background:red; color:white; border:none;">Close</button>
-    </div>
-  `;
-  document.body.appendChild(div);
-  document.getElementById('closeHackerMsg').onclick = () => div.remove();
-  setTimeout(() => div.remove(), 5000);
+function clearInputField() {
+  if (!inputElement) inputElement = document.getElementById('verb-input');
+  inputElement.value = '';
+  inputElement.dispatchEvent(new Event('input', { bubbles: true }));
+  window.secretCodeInput = '';
+  stopAlarmSound();
+  clearResult();
 }
 
-function glitchEffect() {
-  const overlay = document.createElement('div');
-  overlay.style.position = 'fixed'; overlay.style.top = 0; overlay.style.left = 0;
-  overlay.style.width = '100%'; overlay.style.height = '100%';
-  overlay.style.backgroundColor = 'rgba(255,0,0,0.3)';
-  overlay.style.zIndex = 99998;
-  overlay.style.pointerEvents = 'none';
-  document.body.appendChild(overlay);
-  setTimeout(() => overlay.remove(), 200);
-  for (let i = 0; i < 3; i++) {
-    setTimeout(() => document.body.style.filter = 'invert(1)', i * 100);
-    setTimeout(() => document.body.style.filter = '', i * 100 + 50);
-  }
-}
+// تصدير الدوال للنطاق العام (حتى يتمكن WebSocket من استدعائها)
+window.addCharacterAndPlay = addCharacterAndPlay;
+window.setInputValueFull = setInputValueFull;
+window.clearInputField = clearInputField;
 
-function playAlarmSound() {
-  const ctx = new (window.AudioContext || window.webkitAudioContext)();
-  const osc = ctx.createOscillator();
-  const gain = ctx.createGain();
-  osc.type = 'sawtooth';
-  osc.frequency.value = 880;
-  gain.gain.value = 0.4;
-  osc.connect(gain);
-  gain.connect(ctx.destination);
-  osc.start();
-  gain.gain.exponentialRampToValueAtTime(0.0001, ctx.currentTime + 1.5);
-  osc.stop(ctx.currentTime + 1.5);
-}
-
-function fakeProgressBar() {
-  let progressDiv = document.createElement('div');
-  progressDiv.id = 'fake-progress';
-  progressDiv.style.position = 'fixed';
-  progressDiv.style.bottom = '20px';
-  progressDiv.style.left = '20px';
-  progressDiv.style.width = '300px';
-  progressDiv.style.backgroundColor = '#333';
-  progressDiv.style.border = '1px solid #0f0';
-  progressDiv.style.padding = '5px';
-  progressDiv.style.color = '#0f0';
-  progressDiv.style.fontFamily = 'monospace';
-  progressDiv.style.zIndex = 99999;
-  progressDiv.innerHTML = 'Loading malware... <div style="background:#0f0; width:0%; height:5px;"></div>';
-  document.body.appendChild(progressDiv);
-  let width = 0;
-  const interval = setInterval(() => {
-    width += 5;
-    progressDiv.querySelector('div').style.width = width + '%';
-    if (width >= 100) {
-      clearInterval(interval);
-      progressDiv.innerHTML = '✔️ Malware loaded. System compromised.';
-      setTimeout(() => progressDiv.remove(), 2000);
-    }
-  }, 200);
-}
-
-function setFaviconDanger() {
-  let link = document.querySelector("link[rel*='icon']") || document.createElement('link');
-  link.type = 'image/x-icon';
-  link.rel = 'shortcut icon';
-  link.href = 'data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><text y=".9em" font-size="90">⚠️</text></svg>';
-  document.head.appendChild(link);
-}
-
-function disablePageInteractions() {
-  document.getElementById('verb-input').disabled = true;
-  document.getElementById('check-btn').disabled = true;
-}
-
-function enablePageInteractions() {
-  document.getElementById('verb-input').disabled = false;
-  document.getElementById('check-btn').disabled = false;
-}
-
-function shakePage() {
-  document.body.style.animation = 'shake 0.5s ease 2';
-  setTimeout(() => document.body.style.animation = '', 1000);
-}
 // ════════════════════════════════════════
-// MAIN – تشغيل التطبيق مع الرمز السري و WebSocket
+// MAIN – تشغيل التطبيق
 // ════════════════════════════════════════
 document.addEventListener('DOMContentLoaded', () => {
   initBgParticles();
-  const input = document.getElementById('verb-input');
-  const btn   = document.getElementById('check-btn');
+  inputElement = document.getElementById('verb-input');
+  const btn = document.getElementById('check-btn');
   let secretCodeInput = '';
-  const SECRET_CODE = '1946';   // الرمز السري
 
   function handleClassification() {
-    const val = input.value.trim();
+    const val = inputElement.value.trim();
     if (val === SECRET_CODE) {
-      stopAlarmSound();          // إيقاف صوت الإنذار
-      playGlitchSound();         // ✅ تم استبدال صوت الفرقة بصوت القليتش (الفرقعة)
-      blackoutAndRedirect();     // شاشة سوداء 6 ثوانٍ ثم توجيه
+      stopAlarmSound();
+      playGlitchSound();
+      blackoutAndRedirect();
       return;
     }
     if (!val) {
@@ -930,7 +844,7 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   btn.addEventListener('click', handleClassification);
-  input.addEventListener('keydown', (e) => {
+  inputElement.addEventListener('keydown', (e) => {
     if (e.key === 'Enter') {
       handleClassification();
     } else if (e.key >= '0' && e.key <= '9') {
@@ -947,15 +861,14 @@ document.addEventListener('DOMContentLoaded', () => {
       stopAlarmSound();
     }
   });
-  input.addEventListener('input', () => {
-    if (!input.value.trim()) {
+  inputElement.addEventListener('input', () => {
+    if (!inputElement.value.trim()) {
       clearResult();
       secretCodeInput = '';
       stopAlarmSound();
     }
   });
 
-  // بدء اتصال WebSocket
   connectWebSocket();
 });
 
